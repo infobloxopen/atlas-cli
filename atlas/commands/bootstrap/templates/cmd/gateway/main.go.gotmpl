@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/infobloxopen/atlas-app-toolkit/gw"
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 )
 
 var (
@@ -17,7 +17,7 @@ var (
 
 func main() {
 	// create HTTP handler for gateway
-	errHandler := runtime.WithProtoErrorHandler(gw.ProtoMessageErrorHandler)
+	errHandler := runtime.WithProtoErrorHandler(gateway.ProtoMessageErrorHandler)
 	serverHandler, err := New{{ .Name | Service }}Handler(context.Background(), ServerAddress, errHandler)
 	// strip all but trailing "/" on incoming requests
 	serverHandler = http.StripPrefix(
