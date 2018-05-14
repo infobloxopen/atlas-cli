@@ -1,4 +1,7 @@
 # Atlas CLI
+
+[![Build Status](https://travis-ci.org/infobloxopen/atlas-cli.svg?branch=master)](https://travis-ci.org/infobloxopen/atlas-cli) [![Go Report Card](https://goreportcard.com/badge/github.com/infobloxopen/atlas-cli)](https://goreportcard.com/report/github.com/infobloxopen/atlas-cli)
+
 This command-line tool helps developers become productive on Atlas. It aims to provide a better development experience by reducing the initial time and effort it takes to build applications.
 
 ## Getting Started
