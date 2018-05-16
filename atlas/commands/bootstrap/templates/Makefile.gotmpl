@@ -11,7 +11,7 @@ IMAGE_VERSION		?= $(USERNAME)-dev-$(GIT_COMMIT)
 # configuration for server binary and image
 SERVER_BINARY 		:= $(BUILD_PATH)/server
 SERVER_PATH		:= $(PROJECT_ROOT)/cmd/server
-SERVER_IMAGE		:= {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}
+SERVER_IMAGE		:= {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}-server
 SERVER_DOCKERFILE	:= $(DOCKERFILE_PATH)/Dockerfile.server
 {{ if .WithGateway }}
 # configuration for gateway binary and image
