@@ -51,10 +51,12 @@ test: fmt
 .PHONY: server-docker
 server-docker:
 	@docker build -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE):$(IMAGE_VERSION) .
+	@docker image prune -f --filter label=stage=server-intermediate
 {{ if .WithGateway }}
 .PHONY: gateway-docker
 gateway-docker:
 	@docker build -f $(GATEWAY_DOCKERFILE) -t $(GATEWAY_IMAGE):$(IMAGE_VERSION) .
+	@docker image prune -f --filter label=stage=gateway-intermediate
 {{ end }}
 {{- if .Registry }}
 .PHONY: push

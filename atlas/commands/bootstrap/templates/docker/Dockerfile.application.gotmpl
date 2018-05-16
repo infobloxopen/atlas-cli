@@ -1,5 +1,6 @@
 # build the server binary
 FROM golang:1.10.0 as builder
+LABEL stage=server-intermediate
 WORKDIR /go/src/{{ .Root }}/{{ .Name }}
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o bin/server ./cmd/server
