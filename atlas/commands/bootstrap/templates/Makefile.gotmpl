@@ -29,7 +29,7 @@ DOCKER_GENERATOR	:= infoblox/atlas-gentool:v3
 GENERATOR		:= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
 {{ if .WithDatabase }}
 # configuration for the database
-DATBASE_ADDRESS		:= localhost:5432
+DATABASE_ADDRESS	?= localhost:5432
 {{ end }}
 # configuration for building on host machine
 GO_CACHE		:= -pkgdir $(BUILD_PATH)/go-cache
