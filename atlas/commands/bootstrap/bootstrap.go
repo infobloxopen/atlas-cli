@@ -210,7 +210,7 @@ func (app Application) generateFile(filename, templatePath string) error {
 }
 
 func (app Application) generateDockerfile() error {
-	return app.generateFile("docker/Dockerfile.server", "templates/docker/Dockerfile.application.gotmpl")
+	return app.generateFile("docker/Dockerfile.server", "templates/docker/Dockerfile.server.gotmpl")
 }
 
 func (app Application) generateGatewayDockerfile() error {
