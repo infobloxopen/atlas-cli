@@ -162,7 +162,9 @@ func (app Application) initializeDirectories() error {
 // getDirectories returns a list of all project folders
 func (app Application) getDirectories() []string {
 	dirnames := []string{
+		"cmd",
 		"cmd/server",
+		"pkg",
 		"pkg/pb",
 		"pkg/svc",
 		"docker",
