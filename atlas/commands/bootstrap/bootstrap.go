@@ -7,11 +7,14 @@ import (
 	"fmt"
 	"go/build"
 	"html/template"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/infobloxopen/atlas-cli/atlas/commands/bootstrap/templates"
+	"golang.org/x/tools/imports"
 )
 
 const (
@@ -295,16 +298,37 @@ func initDep() error {
 	return nil
 }
 
-// resolveImports calls "goimports" to determine Go imports
+// resolveImports resolves imports for a given set of a packages
 func resolveImports(dirs []string) error {
 	fmt.Print("Resolving imports... ")
 	for _, dir := range dirs {
-		if err := runCommand("goimports", "-w", dir); err != nil {
+		if err := filepath.Walk(dir, resolveFileImports); err != nil {
 			return err
 		}
 	}
 	fmt.Println("done!")
 	return nil
+}
+
+// resolveFileImports determines missing import paths for a given go file and
+// also fixes any formatting issues
+func resolveFileImports(path string, f os.FileInfo, err error) error {
+	if err == nil && isGoFile(f) {
+		withImports, err := imports.Process(path, nil, nil)
+		if err != nil {
+			return err
+		}
+		if err := ioutil.WriteFile(path, withImports, 0); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func isGoFile(f os.FileInfo) bool {
+	// ignore non-Go files
+	name := f.Name()
+	return !f.IsDir() && !strings.HasPrefix(name, ".") && strings.HasSuffix(name, ".go")
 }
 
 // initRepo initializes new applications as a git repository
