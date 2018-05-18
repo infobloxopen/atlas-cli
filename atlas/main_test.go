@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -73,15 +72,14 @@ func TestGetVersion(t *testing.T) {
 func TestFormatting(t *testing.T) {
 	cmd := exec.Command("go", "fmt", "./...")
 	cmd.Dir = "./test"
-	stdout := &bytes.Buffer{}
-	cmd.Stdout = stdout
-	if err := cmd.Run(); err != nil {
+	out, err := cmd.Output()
+	if err != nil {
 		t.Fatalf("unable to run go fmt: %v", err)
 	}
 	// check if bootstrap command produced unformatted go code
-	if stdout.String() != "" {
+	if string(out) != "" {
 		// print unformatted files on a single line, not multiple lines
-		files := strings.Split(stdout.String(), "\n")
+		files := strings.Split(string(out), "\n")
 		t.Fatalf("test application has unformatted go code: %v", strings.Join(files, " "))
 	}
 }
