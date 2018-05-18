@@ -10,12 +10,6 @@ These instructions will help you get the Atlas command-line tool up and running 
 ### Prerequisites
 Please install the following dependencies before running the Atlas command-line tool.
 
-#### goimports
-
-The `goimports` package resolves missing import paths in Go projects. It is part of the [official Go ecosystem](https://golang.org/pkg/#other) and can be installed with the following command:
-```
-$ go get golang.org/x/tools/cmd/goimports
-```
 #### dep
 
 This is a dependency management tool for Go. You can install `dep` with Homebrew:

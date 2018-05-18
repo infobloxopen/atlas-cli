@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 	"time"
 )
@@ -65,5 +66,20 @@ func TestGetVersion(t *testing.T) {
 		t.Errorf("expected get/version to succeed, but got error: %v", err)
 	} else if resp.StatusCode != 200 {
 		t.Errorf("expected response to be status 200, but got %d: %v", resp.StatusCode, resp)
+	}
+}
+
+func TestFormatting(t *testing.T) {
+	cmd := exec.Command("go", "fmt", "./...")
+	cmd.Dir = "./test"
+	out, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("unable to run go fmt: %v", err)
+	}
+	// check if bootstrap command produced unformatted go code
+	if string(out) != "" {
+		// print unformatted files on a single line, not multiple lines
+		files := strings.Split(string(out), "\n")
+		t.Fatalf("test application has unformatted go code: %v", strings.Join(files, " "))
 	}
 }
