@@ -8,57 +8,64 @@ import (
 	{{ if .WithGateway }}"github.com/infobloxopen/atlas-app-toolkit/gateway"{{ end }}
 	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-	{{ if .WithDatabase }}"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"{{ end }}
+	"github.com/infobloxopen/atlas-app-toolkit/server"
 )
 
 var (
-	ServerAddress 			string
-	DBConnectionString 	string
+	ServerAddress  string
+	{{ if .WithGateway -}}
+	GatewayAddress string
+	SwaggerDir     string
+	{{ end -}}
+	{{ if .WithDatabase }}DBConnectionString 	string{{ end }}
 )
 
 func main() {
 	logger := logrus.New()
-	// create new tcp listener
-	ln, err := net.Listen("tcp", ServerAddress)
+	grpcServer, err := NewGRPCServer(logger{{ if .WithDatabase }}, DBConnectionString{{ end }})
 	if err != nil {
 		logger.Fatalln(err)
 	}
-	// create new gRPC server with middleware chain
-	server := grpc.NewServer(
-		grpc.UnaryInterceptor(
-			grpc_middleware.ChainUnaryServer(
-				// validation middleware
-				grpc_validator.UnaryServerInterceptor(),
-				{{ if .WithGateway }} 
-				// collection operators middleware
-				gateway.UnaryServerInterceptor(),
-				{{ end }}
-				// logging middleware
-				grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger)),
-			),
+
+	s, err := server.NewServer(
+		server.WithGrpcServer(grpcServer),
+		{{ if .WithGateway -}}
+		server.WithGateway(
+			gateway.WithServerAddress(ServerAddress),
+			gateway.WithEndpointRegistration(cmd.GatewayURL, pb.Register{{ .Name | Service }}HandlerFromEndpoint),
 		),
-	){{ if .WithDatabase }}
-	// create new postgres database
-	db, err := gorm.Open("postgres", DBConnectionString)
-	if err != nil {
-		logger.Fatalln(err)
-	}{{ end }}
-	// register service implementation with the grpc server
-	s, err := svc.NewBasicServer({{ if .WithDatabase }}db{{ end }})
+		server.WithHandler("/swagger/", NewSwaggerHandler(SwaggerDir)),
+		{{- end }}
+	)
 	if err != nil {
 		logger.Fatalln(err)
 	}
-	pb.Register{{ .Name | Service }}Server(server, s)
-	if err := server.Serve(ln); err != nil {
+
+	grpcL, err := net.Listen("tcp", ServerAddress)
+	if err != nil {
+		logger.Fatalln(err)
+	}
+	{{ if .WithGateway }}
+	httpL, err := net.Listen("tcp", GatewayAddress)
+	if err != nil {
+		logger.Fatalln(err)
+	}
+	{{ end }}
+	logger.Printf("serving gRPC at %s", ServerAddress)
+	{{ if .WithGateway }}logger.Printf("serving http at %s", GatewayAddress){{ end }}
+
+	if err := s.Serve(grpcL, {{ if .WithGateway }}httpL{{ else }}nil{{ end }}); err != nil {
 		logger.Fatalln(err)
 	}
 }
 
 func init() {
 	// default server address; optionally set via command-line flags
-	flag.StringVar(&ServerAddress, "address", cmd.ServerAddress, "the gRPC server address"){{ if .WithDatabase }}
-	flag.StringVar(&DBConnectionString, "db", cmd.DBConnectionString, "the database address"){{ end }}
+	flag.StringVar(&ServerAddress, "address", cmd.ServerAddress, "the gRPC server address")
+	{{ if .WithGateway -}}
+	flag.StringVar(&GatewayAddress, "gateway", cmd.GatewayAddress, "address of the gateway server")
+	flag.StringVar(&SwaggerDir, "swagger-dir", "pkg/pb/service.swagger.json", "directory of the swagger.json file")
+	{{ end -}}
+	{{ if .WithDatabase }}flag.StringVar(&DBConnectionString, "db", cmd.DBConnectionString, "the database address"){{ end }}
 	flag.Parse()
 }

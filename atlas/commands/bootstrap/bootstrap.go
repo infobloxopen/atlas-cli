@@ -130,18 +130,13 @@ func (app Application) initializeFiles() error {
 		Application.generateMakefile,
 		Application.generateProto,
 		Application.generateServerMain,
+		Application.generateServerGrpc,
 		Application.generateConfig,
 		Application.generateService,
 		Application.generateServiceTest,
 	}
 	if app.WithGateway {
-		gatewayInitializers := []func(Application) error{
-			Application.generateGatewayDockerfile,
-			Application.generateGatewayMain,
-			Application.generateGatewayHandler,
-			Application.generateGatewaySwagger,
-		}
-		fileInitializers = append(fileInitializers, gatewayInitializers...)
+		fileInitializers = append(fileInitializers, Application.generateServerSwagger)
 	}
 	for _, initializer := range fileInitializers {
 		if err := initializer(app); err != nil {
@@ -172,11 +167,6 @@ func (app Application) getDirectories() []string {
 		"pkg/svc",
 		"docker",
 		"deploy",
-	}
-	if app.WithGateway {
-		dirnames = append(dirnames,
-			"cmd/gateway",
-		)
 	}
 	if app.WithDatabase {
 		dirnames = append(dirnames,
@@ -215,11 +205,7 @@ func (app Application) generateFile(filename, templatePath string) error {
 }
 
 func (app Application) generateDockerfile() error {
-	return app.generateFile("docker/Dockerfile.server", "templates/docker/Dockerfile.server.gotmpl")
-}
-
-func (app Application) generateGatewayDockerfile() error {
-	return app.generateFile("docker/Dockerfile.gateway", "templates/docker/Dockerfile.gateway.gotmpl")
+	return app.generateFile("docker/Dockerfile", "templates/docker/Dockerfile.gotmpl")
 }
 
 func (app Application) generateReadme() error {
@@ -242,16 +228,12 @@ func (app Application) generateServerMain() error {
 	return app.generateFile("cmd/server/main.go", "templates/cmd/server/main.go.gotmpl")
 }
 
-func (app Application) generateGatewayMain() error {
-	return app.generateFile("cmd/gateway/main.go", "templates/cmd/gateway/main.go.gotmpl")
+func (app Application) generateServerGrpc() error {
+	return app.generateFile("cmd/server/grpc.go", "templates/cmd/server/grpc.go.gotmpl")
 }
 
-func (app Application) generateGatewayHandler() error {
-	return app.generateFile("cmd/gateway/handler.go", "templates/cmd/gateway/handler.go.gotmpl")
-}
-
-func (app Application) generateGatewaySwagger() error {
-	return app.generateFile("cmd/gateway/swagger.go", "templates/cmd/gateway/swagger.go.gotmpl")
+func (app Application) generateServerSwagger() error {
+	return app.generateFile("cmd/server/swagger.go", "templates/cmd/server/swagger.go.gotmpl")
 }
 
 func (app Application) generateConfig() error {

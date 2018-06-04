@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -38,21 +37,18 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	packages := []string{"server", "gateway"}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	for _, pkg := range packages {
-		output := fmt.Sprintf("./test/bin/%s", pkg)
-		log.Printf("building %s", pkg)
-		build := exec.Command("go", "build", "-o", output, fmt.Sprintf("./test/cmd/%s", pkg))
-		if out, err := build.CombinedOutput(); err != nil {
-			log.Print(string(out))
-			log.Fatalf("failed to build %s: %v", pkg, err)
-		}
-		log.Printf("runnning %s", pkg)
-		if err := exec.CommandContext(ctx, output).Start(); err != nil {
-			log.Fatalf("failed to start server %s: %v", pkg, err)
-		}
+	output := "./test/bin/server"
+	log.Printf("building server")
+	build := exec.Command("go", "build", "-o", output, "./test/cmd/server")
+	if out, err := build.CombinedOutput(); err != nil {
+		log.Print(string(out))
+		log.Fatalf("failed to build server: %v", err)
+	}
+	log.Printf("runnning server")
+	if err := exec.CommandContext(ctx, output).Start(); err != nil {
+		log.Fatalf("failed to start server: %v", err)
 	}
 	log.Print("wait for servers to load up")
 	time.Sleep(time.Second)
