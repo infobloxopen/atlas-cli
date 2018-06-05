@@ -119,6 +119,6 @@ make test-with-integration
 
 ### Adding New CLI Commands
 
-If you wish to add a new command to the Atlas CLI, please take a look at the [command interface](https://github.com/infobloxopen/atlas-app-toolkit/blob/master/cli/atlas/commands/command.go). This interface is intended to make adding new commands as minimally impactful to existing functionality.
+If you wish to add a new command to the Atlas CLI, please take a look at the [command interface](https://github.com/infobloxopen/atlas-cli/blob/master/atlas/commands/command.go). This interface is intended to make adding new commands as minimally impactful to existing functionality.
 
-To start out, consider looking at the [bootstrap command's implementation](https://github.com/infobloxopen/atlas-app-toolkit/blob/master/cli/atlas/commands/initialize.go#L37) of this interface.
+To start out, consider looking at the [bootstrap command's implementation](https://github.com/infobloxopen/atlas-cli/blob/master/atlas/commands/bootstrap/bootstrap.go#L43) of this interface.
