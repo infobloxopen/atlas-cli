@@ -1,0 +1,43 @@
+package main
+
+import (
+	"github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+	{{ if .WithDatabase }}"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"{{ end }}
+)
+
+func NewGRPCServer(logger *logrus.Logger{{ if .WithDatabase }}, dbConnectionString string{{ end }}) (*grpc.Server, error){
+	grpcServer := grpc.NewServer(
+	grpc.UnaryInterceptor(
+		grpc_middleware.ChainUnaryServer(
+			// validation middleware
+			grpc_validator.UnaryServerInterceptor(),
+
+			// collection operators middleware
+			gateway.UnaryServerInterceptor(),
+
+			// logging middleware
+			grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger)),
+			),
+		),
+	)
+	{{ if .WithDatabase }}
+	// create new postgres database
+	db, err := gorm.Open("postgres", dbConnectionString)
+	if err != nil {
+		return nil, err
+	}{{ end }}
+	// register service implementation with the grpcServer
+	s, err := svc.NewBasicServer({{ if .WithDatabase }}db{{ end }})
+	if err != nil {
+		return nil, err
+	}
+	pb.Register{{ .Name | Service }}Server(grpcServer, s)
+
+	return grpcServer, nil
+}

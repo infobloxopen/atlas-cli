@@ -12,14 +12,8 @@ IMAGE_VERSION		?= $(USERNAME)-dev-$(GIT_COMMIT)
 SERVER_BINARY 		:= $(BUILD_PATH)/server
 SERVER_PATH		:= $(PROJECT_ROOT)/cmd/server
 SERVER_IMAGE		:= {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}-server
-SERVER_DOCKERFILE	:= $(DOCKERFILE_PATH)/Dockerfile.server
-{{ if .WithGateway }}
-# configuration for gateway binary and image
-GATEWAY_BINARY		:= $(BUILD_PATH)/gateway
-GATEWAY_PATH		:= $(PROJECT_ROOT)/cmd/gateway
-GATEWAY_IMAGE		:= {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}-gateway
-GATEWAY_DOCKERFILE 	:= $(DOCKERFILE_PATH)/Dockerfile.gateway
-{{ end }}
+SERVER_DOCKERFILE	:= $(DOCKERFILE_PATH)/Dockerfile
+
 # configuration for the protobuf gentool
 SRCROOT_ON_HOST		:= $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 SRCROOT_IN_CONTAINER	:= /go/src/$(PROJECT_ROOT)
@@ -38,7 +32,7 @@ GO_TEST_FLAGS		?= -v -cover
 GO_PACKAGES		:= $(shell go list ./... | grep -v vendor)
 
 .PHONY: all
-all: vendor protobuf server-docker{{ if .WithGateway }} gateway-docker{{ end }}
+all: vendor protobuf docker
 
 .PHONY: fmt
 fmt:
@@ -48,21 +42,14 @@ fmt:
 test: fmt
 	@go test $(GO_TEST_FLAGS) $(GO_PACKAGES)
 
-.PHONY: server-docker
-server-docker:
+.PHONY: docker
+docker:
 	@docker build -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE):$(IMAGE_VERSION) .
 	@docker image prune -f --filter label=stage=server-intermediate
-{{ if .WithGateway }}
-.PHONY: gateway-docker
-gateway-docker:
-	@docker build -f $(GATEWAY_DOCKERFILE) -t $(GATEWAY_IMAGE):$(IMAGE_VERSION) .
-	@docker image prune -f --filter label=stage=gateway-intermediate
-{{ end }}
 {{- if .Registry }}
 .PHONY: push
 push:
-	@docker push $(SERVER_IMAGE){{ if .WithGateway }}
-	@docker push $(GATEWAY_IMAGE){{ end }}
+	@docker push $(SERVER_IMAGE)
 {{ end }}
 .PHONY: protobuf
 protobuf:
@@ -84,7 +71,6 @@ vendor-update:
 .PHONY: clean
 clean:
 	@docker rmi -f $(shell docker images -q $(SERVER_IMAGE)) || true
-	{{ if .WithGateway }}@docker rmi -f $(shell docker images -q $(GATEWAY_IMAGE)) || true{{ end }}
 {{ if .WithDatabase }}
 .PHONY: migrate-up
 migrate-up:
