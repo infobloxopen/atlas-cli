@@ -5,7 +5,8 @@ import "net/http"
 func NewSwaggerHandler(swaggerDir string) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/swagger/", func(writer http.ResponseWriter, request *http.Request) {
-		http.ServeFile(writer, request, swaggerDir)
+		subpath := strings.SplitN(request.URL.Path, "/swagger/", 2)[1]
+		http.ServeFile(writer, request, fmt.Sprintf("%s/%s", swaggerDir, subpath))
 	})
 
 	return mux
