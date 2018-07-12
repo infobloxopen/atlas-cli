@@ -9,5 +9,5 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o bin/server ./cmd/server
 FROM alpine:latest AS runner
 WORKDIR /bin
 COPY --from=builder /go/src/{{ .Root }}/{{ .Name }}/bin/server .
-{{ if .WithGateway }}COPY pkg/pb/service.swagger.json tmp/www/swagger.json{{ end }}
-ENTRYPOINT ["server"{{ if .WithGateway}}, "-swagger-dir", "tmp/www/swagger.json"{{ end }}]
+{{ if .WithGateway }}COPY pkg/pb/*.swagger.json tmp/www/swagger{{ end }}
+ENTRYPOINT ["server"{{ if .WithGateway}}, "-swagger-dir", "tmp/www/swagger"{{ end }}]
