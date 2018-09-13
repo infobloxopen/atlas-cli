@@ -1,0 +1,52 @@
+app:
+  id: {{ .Name }}
+server:
+  address: 0.0.0.0
+  port: 9090
+gateway:
+  enable: false
+  address: 0.0.0.0
+  port: 8080
+  endpoint: /{{ .Name | URL }}/v1/
+  swaggerFile: ./www/service.swagger.json
+  swaggerUI: ./www/swagger-ui-dist/
+database:
+  enable: false
+  dsn: 
+  type: postgres
+  address: 0.0.0.0
+  port: 5432
+  name: {{ .Name | Database }}
+  user: postgres
+  password: postgres
+  ssl: disable
+  option:
+atlas.pubsub:
+  enable: false
+  address: atlas.pubsub
+  port: 5555 
+  publish: topic
+  subscribe: topic
+atlas.authz:
+  enable: false
+  address: themis.authz
+  port: 5555
+atlas.audit:
+  enable: false
+  address: atlas.audit
+  port: 5555
+atlas.tagging:
+  enable: false
+  address: atlas.tagging
+  port: 5555
+internal:
+  enable: false
+  address: 0.0.0.0
+  port: 8081
+  health: /healthz
+  readiness: /ready
+config:
+  source: deploy
+  secret.file: 
+logging:
+  level: debug

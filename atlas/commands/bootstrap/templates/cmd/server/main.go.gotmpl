@@ -9,20 +9,20 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/sirupsen/logrus"
 	"github.com/infobloxopen/atlas-app-toolkit/server"
+	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
-var (
-	ServerAddress  string
-	{{ if .WithGateway -}}
-	GatewayAddress string
-	SwaggerDir     string
-	{{ end -}}
-	{{ if .WithDatabase }}DBConnectionString 	string{{ end }}
-)
 
 func main() {
 	logger := logrus.New()
-	grpcServer, err := NewGRPCServer(logger{{ if .WithDatabase }}, DBConnectionString{{ end }})
+	{{ if .WithDatabase }}
+	if viper.GetString("database.dsn") == "" {
+		setDBConnection()
+	}
+	{{ end }}
+	grpcServer, err := NewGRPCServer(logger{{ if .WithDatabase }}, viper.GetString("database.dsn"){{ end }})
 	if err != nil {
 		logger.Fatalln(err)
 	}
@@ -31,28 +31,28 @@ func main() {
 		server.WithGrpcServer(grpcServer),
 		{{ if .WithGateway -}}
 		server.WithGateway(
-			gateway.WithServerAddress(ServerAddress),
-			gateway.WithEndpointRegistration(cmd.GatewayURL, pb.Register{{ .Name | Service }}HandlerFromEndpoint),
+			gateway.WithServerAddress(fmt.Sprintf("%s:%s", viper.GetString("server.address"), viper.GetString("server.port"))),
+			gateway.WithEndpointRegistration(viper.GetString("gateway.endpoint"), pb.Register{{ .Name | Service }}HandlerFromEndpoint),
 		),
-		server.WithHandler("/swagger/", NewSwaggerHandler(SwaggerDir)),
+		server.WithHandler("/swagger/", NewSwaggerHandler(viper.GetString("gateway.swaggerFile"))),
 		{{- end }}
 	)
 	if err != nil {
 		logger.Fatalln(err)
 	}
 
-	grpcL, err := net.Listen("tcp", ServerAddress)
+	grpcL, err := net.Listen("tcp", fmt.Sprintf("%s:%s", viper.GetString("server.address"), viper.GetString("server.port")))
 	if err != nil {
 		logger.Fatalln(err)
 	}
 	{{ if .WithGateway }}
-	httpL, err := net.Listen("tcp", GatewayAddress)
+	httpL, err := net.Listen("tcp", fmt.Sprintf("%s:%s", viper.GetString("gateway.address"), viper.GetString("gateway.port")))
 	if err != nil {
 		logger.Fatalln(err)
 	}
 	{{ end }}
-	logger.Printf("serving gRPC at %s", ServerAddress)
-	{{ if .WithGateway }}logger.Printf("serving http at %s", GatewayAddress){{ end }}
+	logger.Printf("serving gRPC at %s:%s", viper.GetString("server.address"), viper.GetString("server.port"))
+	{{ if .WithGateway }}logger.Printf("serving http at %s:%s", viper.GetString("gateway.address"), viper.GetString("gateway.port")){{ end }}
 
 	if err := s.Serve(grpcL, {{ if .WithGateway }}httpL{{ else }}nil{{ end }}); err != nil {
 		logger.Fatalln(err)
@@ -60,12 +60,30 @@ func main() {
 }
 
 func init() {
-	// default server address; optionally set via command-line flags
-	flag.StringVar(&ServerAddress, "address", cmd.ServerAddress, "the gRPC server address")
-	{{ if .WithGateway -}}
-	flag.StringVar(&GatewayAddress, "gateway", cmd.GatewayAddress, "address of the gateway server")
-	flag.StringVar(&SwaggerDir, "swagger-dir", "pkg/pb/service.swagger.json", "directory of the swagger.json file")
-	{{ end -}}
-	{{ if .WithDatabase }}flag.StringVar(&DBConnectionString, "db", cmd.DBConnectionString, "the database address"){{ end }}
-	flag.Parse()
+	pflag.Parse()
+	viper.BindPFlags(pflag.CommandLine)
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AddConfigPath(viper.GetString("config.source"))
+	if viper.GetString("config.file") != "" {
+		log.Printf("Serving from configuration file: %s", viper.GetString("config.file"))
+		viper.SetConfigName(viper.GetString("config.file"))
+		if err := viper.ReadInConfig(); err != nil {
+			log.Fatalf("cannot load configuration: %v", err)
+		}
+	} else {
+		log.Printf("Serving from default values, environment variables, and/or flags")
+	}
+	resource.RegisterApplication(viper.GetString("app.id"))
+	resource.SetPlural()
 }
+
+{{ if .WithDatabase }}
+// setDBConnection sets the db connection string
+func setDBConnection() {
+	viper.Set("database.dsn", fmt.Sprintf("host=%s port=%s user=%s password=%s sslmode=%s dbname=%s",
+		viper.GetString("database.address"), viper.GetString("database.port"),
+		viper.GetString("database.user"), viper.GetString("database.password"),
+		viper.GetString("database.ssl"), viper.GetString("database.name")))
+}
+{{ end }}
