@@ -3,17 +3,19 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:4d63ca26a477869856c95a8a9760a8405686065538bd375d1f1481a8f5528094"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
     "imports",
-    "internal/fastwalk"
+    "internal/fastwalk",
   ]
+  pruneopts = "UT"
   revision = "a5b4c53f6e8bdcafa95a94671bf2d1203365858b"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ac43ef67587735e680d98569e5732991deda0a8ab76cd1f4db71cee82b68cb6c"
+  input-imports = ["golang.org/x/tools/imports"]
   solver-name = "gps-cdcl"
   solver-version = 1
