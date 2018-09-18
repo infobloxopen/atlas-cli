@@ -4,7 +4,6 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
-	"github.com/infobloxopen/atlas-app-toolkit/requestid"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -16,6 +15,9 @@ func NewGRPCServer(logger *logrus.Logger{{ if .WithDatabase }}, dbConnectionStri
 	grpcServer := grpc.NewServer(
 	grpc.UnaryInterceptor(
 		grpc_middleware.ChainUnaryServer(
+			// Request-Id interceptor
+			//requestid.UnaryServerInterceptor(),
+
 			// validation middleware
 			grpc_validator.UnaryServerInterceptor(),
 
@@ -24,9 +26,6 @@ func NewGRPCServer(logger *logrus.Logger{{ if .WithDatabase }}, dbConnectionStri
 
 			// logging middleware
 			grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger)),
-
-			// Request-Id interceptor
-			requestid.UnaryServerInterceptor(),
 			),
 		),
 	)
