@@ -1,13 +1,16 @@
 package main
 
 import (
+	{{ if .WithGateway }}"context"{{ end }}
 	"flag"
 	"net"
+
+	{{ if .WithGateway }}"github.com/golang/protobuf/proto"{{ end }}
 	"github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
-	{{ if .WithGateway }}"github.com/infobloxopen/atlas-app-toolkit/gateway"{{ end }}
 	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/sirupsen/logrus"
+
+	{{ if .WithGateway }}"github.com/infobloxopen/atlas-app-toolkit/gateway"{{ end }}
 	"github.com/infobloxopen/atlas-app-toolkit/server"
 )
 
@@ -31,6 +34,9 @@ func main() {
 		server.WithGrpcServer(grpcServer),
 		{{ if .WithGateway -}}
 		server.WithGateway(
+			gateway.WithGatewayOptions(
+				runtime.WithForwardResponseOption(forwardResponseOption),
+			),
 			gateway.WithServerAddress(ServerAddress),
 			gateway.WithEndpointRegistration(cmd.GatewayURL, pb.Register{{ .Name | Service }}HandlerFromEndpoint),
 		),
@@ -69,3 +75,10 @@ func init() {
 	{{ if .WithDatabase }}flag.StringVar(&DBConnectionString, "db", cmd.DBConnectionString, "the database address"){{ end }}
 	flag.Parse()
 }
+
+{{ if .WithGateway -}}
+func forwardResponseOption(ctx context.Context, w http.ResponseWriter, resp proto.Message) error {
+	w.Header().Set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
+	return nil
+}
+{{- end }}
