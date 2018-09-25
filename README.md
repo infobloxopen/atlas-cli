@@ -57,6 +57,8 @@ Here's the full set of flags for the `init-app` command.
 | `name`        | The name of the new application                                 | Yes           | N/A           |
 | `db`          | Bootstrap the application with PostgreSQL database integration  | No            | `false`       |
 | `gateway`     | Initialize the application with a gRPC gateway                  | No            | `false`       |
+| `health`      | Initialize the application with internal health checks          | No            | `false`       |
+| `pubsub`      | Initialize the application with a atlas-pubsub example          | No            | `false`       |
 | `registry`    | The Docker registry where application images are pushed         | No            | `""`          |
 
 You can run `atlas init-app --help` to see these flags and their descriptions on the command-line.
@@ -90,10 +92,18 @@ registry-name/image-name:image-version
 image-name:image-version
 ```
 
+### Pubsub Example
+To run the pubsub example ensure you run the application with the correct configuration by passing the pubsub server address. 
+For more info  [atlas-pubsub](https://github.com/infobloxopen/atlas-pubsub)
+```sh
+# generates an application with a pubsub example
+atlas init-app -name=my-application -pubsub
+```
+
 Of course, you may include all the flags in the `init-app` command.
 
 ```sh
-atlas init-app -name=my-application -gateway -db -registry=infoblox
+atlas init-app -name=my-application -gateway -db -registry=infoblox -pubsub -health
 ```
 
 ## Contributing to the Atlas CLI

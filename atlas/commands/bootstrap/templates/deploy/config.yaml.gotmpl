@@ -4,14 +4,14 @@ server:
   address: 0.0.0.0
   port: 9090
 gateway:
-  enable: false
+  enable: {{ if .WithGateway }}true{{ else }}false{{ end }}
   address: 0.0.0.0
   port: 8080
   endpoint: /{{ .Name | URL }}/v1/
   swaggerFile: ./www/service.swagger.json
   swaggerUI: ./www/swagger-ui-dist/
 database:
-  enable: false
+  enable: {{ if .WithDatabase }}true{{ else }}false{{ end }}
   dsn: 
   type: postgres
   address: 0.0.0.0
@@ -22,7 +22,7 @@ database:
   ssl: disable
   option:
 atlas.pubsub:
-  enable: false
+  enable: {{ if .WithPubsub }}true{{ else }}false{{ end }}
   address: atlas.pubsub
   port: 5555 
   publish: topic
@@ -40,7 +40,7 @@ atlas.tagging:
   address: atlas.tagging
   port: 5555
 internal:
-  enable: false
+  enable: {{ if .WithHealth }}true{{ else }}false{{ end }}
   address: 0.0.0.0
   port: 8081
   health: /healthz
