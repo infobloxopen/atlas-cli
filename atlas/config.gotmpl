@@ -1,3 +1,4 @@
+// Template for configuration
 package main
 
 import "github.com/spf13/pflag"
@@ -9,35 +10,35 @@ const (
 	defaultServerAddress = "0.0.0.0"
 	defaultServerPort    = "9090"
 
-	// Gateway 
-	defaultGatewayEnable      = {{ if .WithGateway }}true{{ else }}false{{ end }}
+	// Gateway
+	defaultGatewayEnable      = false
 	defaultGatewayAddress     = "0.0.0.0"
 	defaultGatewayPort        = "8080"
-	defaultGatewayURL         = "/{{ .Name | URL }}/v1/"
+	defaultGatewayURL         = "/app_name/v1/"
 	defaultGatewaySwaggerFile = "pkg/pb/service.swagger.json"
 
-	// Database 
-	defaultDatabaseEnable   = {{ if .WithDatabase }}true{{ else }}false{{ end }}
+	// Database
+	defaultDatabaseEnable = false
 	// DSN example: "postgres://postgres:postgres@postgres:5432/atlas_db?sslmode=disable"
 	defaultDatabaseDSN      = ""
 	defaultDatabaseType     = "postgres"
 	defaultDatabaseAddress  = "0.0.0.0"
 	defaultDatabasePort     = "5432"
-	defaultDatabaseName     = "{{ .Name | Database }}"
+	defaultDatabaseName     = "app_name"
 	defaultDatabaseUser     = "postgres"
 	defaultDatabasePassword = "postgres"
 	defaultDatabaseSSL      = "disable"
 	defaultDatabaseOption   = ""
 
 	// PubSub
-	defaultPubsubEnable    =  {{ if .WithPubsub }}true{{ else }}false{{ end }}
-	defaultPubsubAddress   = "pubsub.atlas"
-	defaultPubsubPort      = "5555"
-	defaultPubsubPublish   = "example_hello"
-	defaultPubsubSubscribe = "example_hello"
+	defaultPubsubEnable       = false
+	defaultPubsubAddress      = "pubsub.atlas"
+	defaultPubsubPort         = "5555"
+	defaultPubsubPublish      = "example_hello"
+	defaultPubsubSubscribe    = "example_hello"
 	defaultPubsubSubscriberID = "example_hello_subscriberid"
 
-	// Authz 
+	// Authz
 	defaultAuthzEnable  = false
 	defaultAuthzAddress = "authz.atlas"
 	defaultAuthzPort    = "5555"
@@ -53,7 +54,7 @@ const (
 	defaultTaggingPort    = "5555"
 
 	// Health
-	defaultInternalEnable    = {{ if .WithHealth }}true{{ else }}false{{ end }}
+	defaultInternalEnable    = false
 	defaultInternalAddress   = "0.0.0.0"
 	defaultInternalPort      = "8081"
 	defaultInternalHealth    = "/health"
@@ -62,7 +63,7 @@ const (
 	defaultConfigDirectory = "deploy/"
 	defaultConfigFile      = ""
 	defaultSecretFile      = ""
-	defaultApplicationID   = "{{ .Name }}"
+	defaultApplicationID   = "app_name"
 
 	// Logging
 	defaultLoggingLevel = "debug"
@@ -96,7 +97,6 @@ var (
 	flagPubsubPublish      = pflag.String("atlas.pubsub.publish", defaultPubsubPublish, "publisher topic")
 	flagPubsubSubscribe    = pflag.String("atlas.pubsub.subscribe", defaultPubsubSubscribe, "subscriber topic")
 	flagPubsubSubscriberID = pflag.String("atlas.pubsub.subscriber.id", defaultPubsubSubscriberID, "subscriber id")
-
 
 	flagAuthzEnable  = pflag.Bool("atlas.authz.enable", defaultAuthzEnable, "enable application with authorization")
 	flagAuthzAddress = pflag.String("atlas.authz.address", defaultAuthzAddress, "address or FQDN of the authorization service")
