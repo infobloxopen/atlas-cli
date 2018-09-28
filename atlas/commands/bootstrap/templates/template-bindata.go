@@ -377,7 +377,11 @@ func templatesTemplateBindataGo() (*asset, error) {
 		return nil, err
 	}
 
+<<<<<<< HEAD
 	info := bindataFileInfo{name: "templates/template-bindata.go", size: 118784, mode: os.FileMode(420), modTime: time.Unix(1538152052, 0)}
+=======
+	info := bindataFileInfo{name: "templates/template-bindata.go", size: 118784, mode: os.FileMode(420), modTime: time.Unix(1538149317, 0)}
+>>>>>>> f6980502030ee51c16987ff3817d3d23cf70c0e4
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
