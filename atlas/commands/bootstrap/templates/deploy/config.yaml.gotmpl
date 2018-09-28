@@ -9,7 +9,6 @@ gateway:
   port: 8080
   endpoint: /{{ .Name | URL }}/v1/
   swaggerFile: ./www/service.swagger.json
-  swaggerUI: ./www/swagger-ui-dist/
 database:
   enable: {{ if .WithDatabase }}true{{ else }}false{{ end }}
   dsn: 

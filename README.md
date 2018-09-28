@@ -106,6 +106,65 @@ Of course, you may include all the flags in the `init-app` command.
 atlas init-app -name=my-application -gateway -db -registry=infoblox -pubsub -health
 ```
 
+## Viper Configuration
+
+Generated atlas projects use [viper](https://github.com/spf13/viper), a complete configuration solution that allows an application to run from different environments. Viper also provides precedence order which is in the order as below.
+
+#### Running from Default Values 
+By default if you don't change anything your application will run with the values in config.go 
+#### Running from Flags 
+```
+go run cmd/server/*.go --database.port 5432
+```
+#### Running from Environment Variables 
+```
+export DATABASE_PORT=5432
+go run cmd/server/*.go
+```
+#### Running from Config file  
+Change the configuration for defaultConfigDirectory and defaultConfigFile to point to your configuration file. 
+You can either change it in config.go, passing it as environment variables, or flags. 
+
+```
+go run cmd/server/*.go --config.source "some/path/" --config.file "config_file.yaml" 
+```
+
+
+### Manually adding Viper 
+1. Copy  [config.go](./atlas/config.gotmpl) and add it to your project under cmd/server/config.go
+2. Update config.go by setting all your default values 
+3. Add the following snippet of code inside your main.go that will allow you to initilize all the viper configuration. 
+```go
+func init() {
+	pflag.Parse()
+	viper.BindPFlags(pflag.CommandLine)
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AddConfigPath(viper.GetString("config.source"))
+	if viper.GetString("config.file") != "" {
+		log.Printf("Serving from configuration file: %s", viper.GetString("config.file"))
+		viper.SetConfigName(viper.GetString("config.file"))
+		if err := viper.ReadInConfig(); err != nil {
+			log.Fatalf("cannot load configuration: %v", err)
+		}
+	} else {
+		log.Printf("Serving from default values, environment variables, and/or flags")
+	}
+	resource.RegisterApplication(viper.GetString("app.id"))
+	resource.SetPlural()
+}
+```
+4. To get or set viper configuration inside your code use the following methods:
+```go
+// Retrieving a string
+viper.GetString("database.address")
+// Retrieving a bool 
+viper.GetBool("database.enable")
+```
+
+
+
+
 ## Contributing to the Atlas CLI
 Contributions to the Atlas CLI are welcome via pull requests and issues. If you're interested in making changes or adding new features, please take a minute to skim these instructions.
 
