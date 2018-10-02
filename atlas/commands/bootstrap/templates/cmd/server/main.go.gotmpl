@@ -9,23 +9,97 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	{{ if .WithPubsub }}"google.golang.org/grpc"{{ end }}
 
 	{{ if .WithGateway }}"github.com/infobloxopen/atlas-app-toolkit/gateway"{{ end }}
 	"github.com/infobloxopen/atlas-app-toolkit/server"
-)
-
-var (
-	ServerAddress  string
-	{{ if .WithGateway -}}
-	GatewayAddress string
-	SwaggerDir     string
-	{{ end -}}
-	{{ if .WithDatabase }}DBConnectionString 	string{{ end }}
+	{{ if .WithPubsub }}pubsubgrpc "github.com/infobloxopen/atlas-pubsub/grpc"{{ end }}
+	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
+	{{ if .WithHealth }}"github.com/infobloxopen/atlas-app-toolkit/health"{{ end }}
 )
 
 func main() {
-	logger := logrus.New()
-	grpcServer, err := NewGRPCServer(logger{{ if .WithDatabase }}, DBConnectionString{{ end }})
+	doneC := make(chan error)
+	logger := NewLogger()
+
+	{{ if .WithHealth}}if viper.GetBool("internal.enable") {
+		go func() { doneC <- ServeInternal(logger) }()
+	}{{ end }}
+
+	go func() { doneC <- ServeExternal(logger) }()
+
+	{{ if .WithPubsub}}if viper.GetBool("atlas.pubsub.enable") {
+		InitSubscriber(logger)
+	}{{ end }}
+
+	if err := <-doneC; err != nil {
+		logger.Fatal(err)
+	}
+}
+
+func NewLogger() *logrus.Logger {
+	logger := logrus.StandardLogger()
+
+	// Set the log level on the default logger based on command line flag
+	logLevels := map[string]logrus.Level{
+		"debug":   logrus.DebugLevel,
+		"info":    logrus.InfoLevel,
+		"warning": logrus.WarnLevel,
+		"error":   logrus.ErrorLevel,
+		"fatal":   logrus.FatalLevel,
+		"panic":   logrus.PanicLevel,
+	}
+	if level, ok := logLevels[viper.GetString("logging.level")]; !ok {
+		logger.Errorf("Invalid %q provided for log level", viper.GetString("logging.level"))
+		logger.SetLevel(logrus.InfoLevel)
+	} else {
+		logger.SetLevel(level)
+	}
+
+	return logger
+}
+{{ if .WithHealth }}
+// ServeInternal builds and runs the server that listens on InternalAddress
+func ServeInternal(logger *logrus.Logger) error {
+	healthChecker := health.NewChecksHandler(
+		viper.GetString("internal.health"),
+		viper.GetString("internal.readiness"),
+	)
+	{{ if .WithDatabase }}healthChecker.AddReadiness("DB ready check", dbReady){{end}}
+	healthChecker.AddLiveness("ping", health.HTTPGetCheck(
+		fmt.Sprint("http://", viper.GetString("internal.address"), ":", viper.GetString("internal.port"), "/ping"), time.Minute),
+	)
+
+	s, err := server.NewServer(
+		// register our health checks
+		server.WithHealthChecks(healthChecker),
+		// this endpoint will be used for our health checks
+		server.WithHandler("/ping", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(200)
+			w.Write([]byte("pong"))
+		})),
+	)
+	if err != nil {
+		return err
+	}
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%s", viper.GetString("internal.address"), viper.GetString("internal.port")))
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf("serving internal http at %q", fmt.Sprintf("%s:%s", viper.GetString("internal.address"), viper.GetString("internal.port")))
+	return s.Serve(nil, l)
+}
+{{ end }}
+// ServeExternal builds and runs the server that listens on ServerAddress and GatewayAddress
+func ServeExternal(logger *logrus.Logger) error {
+	{{ if .WithDatabase }}
+	if viper.GetString("database.dsn") == "" {
+		setDBConnection()
+	}{{ end }}
+	grpcServer, err := NewGRPCServer(logger{{ if .WithDatabase }}, viper.GetString("database.dsn"){{ end }})
 	if err != nil {
 		logger.Fatalln(err)
 	}
@@ -37,43 +111,49 @@ func main() {
 			gateway.WithGatewayOptions(
 				runtime.WithForwardResponseOption(forwardResponseOption),
 			),
-			gateway.WithServerAddress(ServerAddress),
-			gateway.WithEndpointRegistration(cmd.GatewayURL, pb.Register{{ .Name | Service }}HandlerFromEndpoint),
+			gateway.WithServerAddress(fmt.Sprintf("%s:%s", viper.GetString("server.address"), viper.GetString("server.port"))),
+			gateway.WithEndpointRegistration(viper.GetString("gateway.endpoint"), pb.Register{{ .Name | Service }}HandlerFromEndpoint),
 		),
-		server.WithHandler("/swagger/", NewSwaggerHandler(SwaggerDir)),
+		server.WithHandler("/swagger/", NewSwaggerHandler(viper.GetString("gateway.swaggerFile"))),
 		{{- end }}
 	)
 	if err != nil {
 		logger.Fatalln(err)
 	}
 
-	grpcL, err := net.Listen("tcp", ServerAddress)
+	grpcL, err := net.Listen("tcp", fmt.Sprintf("%s:%s", viper.GetString("server.address"), viper.GetString("server.port")))
 	if err != nil {
 		logger.Fatalln(err)
 	}
 	{{ if .WithGateway }}
-	httpL, err := net.Listen("tcp", GatewayAddress)
+	httpL, err := net.Listen("tcp", fmt.Sprintf("%s:%s", viper.GetString("gateway.address"), viper.GetString("gateway.port")))
 	if err != nil {
 		logger.Fatalln(err)
 	}
 	{{ end }}
-	logger.Printf("serving gRPC at %s", ServerAddress)
-	{{ if .WithGateway }}logger.Printf("serving http at %s", GatewayAddress){{ end }}
+	logger.Printf("serving gRPC at %s:%s", viper.GetString("server.address"), viper.GetString("server.port"))
+	{{ if .WithGateway }}logger.Printf("serving http at %s:%s", viper.GetString("gateway.address"), viper.GetString("gateway.port")){{ end }}
 
-	if err := s.Serve(grpcL, {{ if .WithGateway }}httpL{{ else }}nil{{ end }}); err != nil {
-		logger.Fatalln(err)
-	}
+	return s.Serve(grpcL, {{ if .WithGateway }}httpL{{ else }}nil{{ end }})
 }
 
 func init() {
-	// default server address; optionally set via command-line flags
-	flag.StringVar(&ServerAddress, "address", cmd.ServerAddress, "the gRPC server address")
-	{{ if .WithGateway -}}
-	flag.StringVar(&GatewayAddress, "gateway", cmd.GatewayAddress, "address of the gateway server")
-	flag.StringVar(&SwaggerDir, "swagger-dir", "pkg/pb/service.swagger.json", "directory of the swagger.json file")
-	{{ end -}}
-	{{ if .WithDatabase }}flag.StringVar(&DBConnectionString, "db", cmd.DBConnectionString, "the database address"){{ end }}
-	flag.Parse()
+	pflag.Parse()
+	viper.BindPFlags(pflag.CommandLine)
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AddConfigPath(viper.GetString("config.source"))
+	if viper.GetString("config.file") != "" {
+		log.Printf("Serving from configuration file: %s", viper.GetString("config.file"))
+		viper.SetConfigName(viper.GetString("config.file"))
+		if err := viper.ReadInConfig(); err != nil {
+			log.Fatalf("cannot load configuration: %v", err)
+		}
+	} else {
+		log.Printf("Serving from default values, environment variables, and/or flags")
+	}
+	resource.RegisterApplication(viper.GetString("app.id"))
+	resource.SetPlural()
 }
 
 {{ if .WithGateway -}}
@@ -82,3 +162,58 @@ func forwardResponseOption(ctx context.Context, w http.ResponseWriter, resp prot
 	return nil
 }
 {{- end }}
+{{ if .WithHealth }}{{ if .WithDatabase }}
+func dbReady() error {
+	if viper.GetString("database.dsn") == "" {
+		setDBConnection()
+	}
+	db, err := sql.Open(viper.GetString("database.type"), viper.GetString("database.dsn"))
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	return db.Ping()
+}{{ end }}{{ end }}
+
+{{ if .WithDatabase }}
+// setDBConnection sets the db connection string
+func setDBConnection() {
+	viper.Set("database.dsn", fmt.Sprintf("host=%s port=%s user=%s password=%s sslmode=%s dbname=%s",
+		viper.GetString("database.address"), viper.GetString("database.port"),
+		viper.GetString("database.user"), viper.GetString("database.password"),
+		viper.GetString("database.ssl"), viper.GetString("database.name")))
+}
+{{ end }}
+{{ if .WithPubsub }}
+// InitSubscriber initiliazes the example atlas-pubsub subscriber
+func InitSubscriber(logger *logrus.Logger) {
+	var url = fmt.Sprintf("%s:%s", viper.GetString("atlas.pubsub.address"), viper.GetString("atlas.pubsub.port"))
+	var topic = viper.GetString("atlas.pubsub.subscribe")
+	var subscriptionID = viper.GetString("atlas.pubsub.subscriber.id")
+	logger.Printf("pubsub: subscribing to server at %s with topic %q and subscription ID %q", url, topic, subscriptionID)
+	conn, err := grpc.Dial(url, grpc.WithInsecure())
+	if err != nil {
+		logger.Fatalf("pubsub subscriber: Failed to dial to grpc server won't receive any messages %v", err)
+	}
+	s := pubsubgrpc.NewSubscriber(topic, subscriptionID, conn)
+	c, e := s.Start(context.Background())
+	for {
+		select {
+		case msg, isOpen := <-c:
+			if !isOpen {
+				logger.Println("pubsub: subscription channel closed")
+				return
+			}
+			greeting := string(msg.Message())
+			logger.Printf("pubsub: received message: %q", greeting)
+			go func() {
+				if err := msg.Ack(); err != nil {
+					logger.Fatalf("pubsub: failed to ack messageID %q: %v", msg.MessageID(), err)
+				}
+			}()
+		case err := <-e:
+			logger.Printf("pubsub: encountered error reading subscription: %v", err)
+		}
+	}
+}
+{{ end }}

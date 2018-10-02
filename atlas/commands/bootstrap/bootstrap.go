@@ -6,12 +6,12 @@ import (
 	"flag"
 	"fmt"
 	"go/build"
-	"html/template"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/infobloxopen/atlas-cli/atlas/commands/bootstrap/templates"
 	"golang.org/x/tools/imports"
@@ -27,6 +27,8 @@ const (
 	flagWithGateway  = "gateway"
 	flagWithDebug    = "debug"
 	flagWithDatabase = "db"
+	flagWithHealth   = "health"
+	flagWithPubsub   = "pubsub"
 )
 
 var (
@@ -37,6 +39,8 @@ var (
 	initializeGateway  = initialize.Bool(flagWithGateway, false, "generate project with a gRPC gateway (default false)")
 	initializeDebug    = initialize.Bool(flagWithDebug, false, "print debug statements during intialization (default false)")
 	initializeDatabase = initialize.Bool(flagWithDatabase, false, "initialize the application with database folders")
+	initializeHealth   = initialize.Bool(flagWithHealth, false, "initialize the application with internal health checks")
+	initializePubsub   = initialize.Bool(flagWithPubsub, false, "initialize the application with a pubsub example")
 )
 
 // bootstrap implements the command interface for project intialization
@@ -66,6 +70,8 @@ func (b Bootstrap) Run() error {
 		Root:         root,
 		WithGateway:  *initializeGateway,
 		WithDatabase: *initializeDatabase,
+		WithHealth:   *initializeHealth,
+		WithPubsub:   *initializePubsub,
 	}
 	if err := app.initialize(); err != nil {
 		return initializationError{err: err}
@@ -86,6 +92,8 @@ type Application struct {
 	Root         string
 	WithGateway  bool
 	WithDatabase bool
+	WithHealth   bool
+	WithPubsub   bool
 }
 
 // initialize generates brand-new application
@@ -125,6 +133,7 @@ func (app Application) initialize() error {
 func (app Application) initializeFiles() error {
 	fileInitializers := []func(Application) error{
 		Application.generateDockerfile,
+		Application.generateDeployFile,
 		Application.generateReadme,
 		Application.generateGitignore,
 		Application.generateMakefile,
@@ -208,6 +217,10 @@ func (app Application) generateDockerfile() error {
 	return app.generateFile("docker/Dockerfile", "templates/docker/Dockerfile.gotmpl")
 }
 
+func (app Application) generateDeployFile() error {
+	return app.generateFile("deploy/config.yaml", "templates/deploy/config.yaml.gotmpl")
+}
+
 func (app Application) generateReadme() error {
 	return app.generateFile("README.md", "templates/README.md.gotmpl")
 }
@@ -237,7 +250,7 @@ func (app Application) generateServerSwagger() error {
 }
 
 func (app Application) generateConfig() error {
-	return app.generateFile("cmd/config.go", "templates/cmd/config.go.gotmpl")
+	return app.generateFile("cmd/server/config.go", "templates/cmd/server/config.go.gotmpl")
 }
 
 func (app Application) generateService() error {

@@ -32,6 +32,16 @@ message VersionResponse {
   string version = 1;
 }
 
+{{ if .WithPubsub }}// Example Publish Response
+message PublishResponse {
+  string status = 1;
+}
+
+// Example Publish Request
+message PublishRequest {
+  string message = 1;
+}{{end}}
+
 // TODO: Define the {{ .Name | Service }} service and its methods. Feel free
 // to change the name of {{ .Name | Service }} to better-suit your naming
 // conventions.
@@ -42,4 +52,12 @@ service {{ .Name | Service }} {
       get: "/version"
     };{{ end }}
   }
+{{ if .WithPubsub }}
+  // Example Publish call
+  rpc Publish (PublishRequest) returns (PublishResponse) {
+    option (google.api.http) = {
+      post: "/publish"
+      body: "*"
+    };
+  }{{end}}
 }
