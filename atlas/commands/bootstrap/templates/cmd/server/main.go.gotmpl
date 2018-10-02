@@ -9,15 +9,15 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	{{ if .WithPubsub }}"google.golang.org/grpc"{{ end }}
 
 	{{ if .WithGateway }}"github.com/infobloxopen/atlas-app-toolkit/gateway"{{ end }}
 	"github.com/infobloxopen/atlas-app-toolkit/server"
 	{{ if .WithPubsub }}pubsubgrpc "github.com/infobloxopen/atlas-pubsub/grpc"{{ end }}
 	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
 	{{ if .WithHealth }}"github.com/infobloxopen/atlas-app-toolkit/health"{{ end }}
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
-	{{ if .WithPubsub }}"google.golang.org/grpc"{{ end }}
 )
 
 func main() {
@@ -155,6 +155,13 @@ func init() {
 	resource.RegisterApplication(viper.GetString("app.id"))
 	resource.SetPlural()
 }
+
+{{ if .WithGateway -}}
+func forwardResponseOption(ctx context.Context, w http.ResponseWriter, resp proto.Message) error {
+	w.Header().Set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
+	return nil
+}
+{{- end }}
 {{ if .WithHealth }}{{ if .WithDatabase }}
 func dbReady() error {
 	if viper.GetString("database.dsn") == "" {
@@ -210,9 +217,3 @@ func InitSubscriber(logger *logrus.Logger) {
 	}
 }
 {{ end }}
-{{ if .WithGateway -}}
-func forwardResponseOption(ctx context.Context, w http.ResponseWriter, resp proto.Message) error {
-	w.Header().Set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
-	return nil
-}
-{{- end }}
