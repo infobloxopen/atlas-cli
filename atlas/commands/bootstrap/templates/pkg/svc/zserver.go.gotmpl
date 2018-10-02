@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 	{{ if .WithDatabase }}"github.com/jinzhu/gorm"{{ end }}
+	{{ if .WithPubsub }}pubsubgrpc "github.com/infobloxopen/atlas-pubsub/grpc"
+	"github.com/spf13/viper"
+	"google.golang.org/grpc"{{ end }}
 )
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -27,7 +30,10 @@ import (
 // versioning system, or get rid of it entirely. GetVersion helps make up a
 // simple "starter" example that allows an end-to-end example. It is not
 // required.
-//
+//{{ if .WithPubsub}}
+// TODO: Update the Publish function to better-suit your application, or get 
+// rid of it if your application is not using atlas pubsub. 
+//{{ end }}
 // TODO: Oh yeah, delete this guide when you no longer need it.
 // 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ FAREWELL AND GOOD LUCK ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -45,7 +51,26 @@ type server struct{ {{ if .WithDatabase }}db *gorm.DB{{ end }} }
 func (server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse, error) {
 	return &pb.VersionResponse{Version: version}, nil
 }
+{{ if .WithPubsub}}
+// Publish publishes a message to the pubsub server with the publish request message
+// TODO update example publish with your own logic.
+func (server) Publish(ctx context.Context, pr *pb.PublishRequest) (*pb.PublishResponse, error) {
+	var url = fmt.Sprintf("%s:%s", viper.GetString("atlas.pubsub.address"), viper.GetString("atlas.pubsub.port"))
+	var topic = viper.GetString("atlas.pubsub.publish")
+	log.Printf("publishing hello world message to %s with topic %q", url, topic)
+	conn, err := grpc.Dial(url, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("pubsub publisher: Failed to dial to grpc server: %v", err)
+	}
+	p := pubsubgrpc.NewPublisher(topic, conn)
+	msg := fmt.Sprintf("%s, %s %s", "Hello World", pr.GetMessage(), time.Now())
+	if err := p.Publish(context.Background(), []byte(msg), nil); err != nil {
+		return &pb.PublishResponse{Status: "Failed publishing message"}, nil
+	}
 
+	return &pb.PublishResponse{Status: "Message published"}, nil
+}
+{{ end }}
 // NewBasicServer returns an instance of the default server interface
 func NewBasicServer({{ if .WithDatabase}}database *gorm.DB{{ end }}) (pb.{{ .Name | Service }}Server, error) {
 	return &server{ {{ if .WithDatabase}}db: database{{ end }} }, nil
