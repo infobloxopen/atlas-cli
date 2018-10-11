@@ -24,6 +24,8 @@ GENERATOR		:= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
 {{ if .WithDatabase }}
 # configuration for the database
 DATABASE_ADDRESS	?= localhost:5432
+DATABASE_USERNAME	?= postgres
+DATABASE_PASSWORD	?= postgres
 {{ end }}
 # configuration for building on host machine
 GO_CACHE		:= -pkgdir $(BUILD_PATH)/go-cache
@@ -54,6 +56,7 @@ push:
 .PHONY: protobuf
 protobuf:
 	@$(GENERATOR) \
+	-I=$(PROJECT_ROOT)/vendor \
 	--go_out=plugins=grpc:. \{{ if .WithGateway }}
 	--grpc-gateway_out=logtostderr=true:. \{{ end }}{{ if .WithDatabase }}
 	--gorm_out=. \{{ end }}
@@ -74,9 +77,9 @@ clean:
 {{ if .WithDatabase }}
 .PHONY: migrate-up
 migrate-up:
-	@migrate -database 'postgres://$(DATABASE_ADDRESS)/{{ .Name | Database }}?sslmode=disable' -path ./db/migrations up
+	@migrate -database 'postgres://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DATABASE_ADDRESS)/{{ .Name | Database }}?sslmode=disable' -path ./db/migrations up
 	
 .PHONY: migrate-down
 migrate-down:
-	@migrate -database 'postgres://$(DATABASE_ADDRESS):5432/{{ .Name | Database }}?sslmode=disable' -path ./db/migrations down
+	@migrate -database 'postgres://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DATABASE_ADDRESS)/{{ .Name | Database }}?sslmode=disable' -path ./db/migrations down
 {{ end }}
