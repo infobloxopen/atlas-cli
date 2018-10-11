@@ -19,13 +19,18 @@ SRCROOT_ON_HOST		:= $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 SRCROOT_IN_CONTAINER	:= /go/src/$(PROJECT_ROOT)
 DOCKER_RUNNER    	:= docker run -u `id -u`:`id -g` --rm
 DOCKER_RUNNER		+= -v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
-DOCKER_GENERATOR	:= infoblox/atlas-gentool:v3
+DOCKER_GENERATOR	:= infoblox/atlas-gentool:latest
 GENERATOR		:= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
 {{ if .WithDatabase }}
 # configuration for the database
 DATABASE_ADDRESS	?= localhost:5432
 DATABASE_USERNAME	?= postgres
 DATABASE_PASSWORD	?= postgres
+DATABASE_NAME       = {{ .Name | Database }}
+DATABASE_URL        ?= postgres://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DATABASE_ADDRESS)/$(DATABASE_NAME)?sslmode=disable
+
+MIGRATETOOL_IMAGE           = infoblox/migrate:latest
+MIGRATION_PATH_IN_CONTAINER = $(SRCROOT_IN_CONTAINER)/db/migrations
 {{ end }}
 # configuration for building on host machine
 GO_CACHE		:= -pkgdir $(BUILD_PATH)/go-cache
@@ -70,16 +75,16 @@ vendor:
 .PHONY: vendor-update
 vendor-update:
 	@dep ensure
-	
+
 .PHONY: clean
 clean:
 	@docker rmi -f $(shell docker images -q $(SERVER_IMAGE)) || true
 {{ if .WithDatabase }}
 .PHONY: migrate-up
 migrate-up:
-	@migrate -database 'postgres://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DATABASE_ADDRESS)/{{ .Name | Database }}?sslmode=disable' -path ./db/migrations up
-	
+	@$(DOCKER_RUNNER) --net="host" ${MIGRATETOOL_IMAGE} --verbose --path=$(MIGRATION_PATH_IN_CONTAINER)/ --database.dsn=$(DATABASE_URL) up
+
 .PHONY: migrate-down
 migrate-down:
-	@migrate -database 'postgres://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DATABASE_ADDRESS)/{{ .Name | Database }}?sslmode=disable' -path ./db/migrations down
+	@$(DOCKER_RUNNER) --net="host" ${MIGRATETOOL_IMAGE} --verbose --path=$(MIGRATION_PATH_IN_CONTAINER)/ --database.dsn=$(DATABASE_URL) down
 {{ end }}
