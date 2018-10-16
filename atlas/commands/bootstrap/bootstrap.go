@@ -147,6 +147,10 @@ func (app Application) initializeFiles() error {
 	if app.WithGateway {
 		fileInitializers = append(fileInitializers, Application.generateServerSwagger)
 	}
+	if app.WithDatabase {
+		fileInitializers = append(fileInitializers, Application.generateMigrationFile)
+	}
+
 	for _, initializer := range fileInitializers {
 		if err := initializer(app); err != nil {
 			return err
@@ -219,6 +223,10 @@ func (app Application) generateDockerfile() error {
 
 func (app Application) generateDeployFile() error {
 	return app.generateFile("deploy/config.yaml", "templates/deploy/config.yaml.gotmpl")
+}
+
+func (app Application) generateMigrationFile() error {
+	return app.generateFile("deploy/migrations.yaml", "templates/deploy/migrations.yaml.gotmpl")
 }
 
 func (app Application) generateReadme() error {

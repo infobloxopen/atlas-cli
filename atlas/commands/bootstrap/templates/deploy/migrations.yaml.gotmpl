@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: default
+  name: {{ .Name }}-migration
+spec:
+  restartPolicy: Never
+  initContainers:
+  - name: tmp-container
+    image: {{if ne .Registry ""}}{{ .Registry }}/{{ end }}{{ .Name }}-server:latest
+    imagePullPolicy: Always
+    volumeMounts:
+    - mountPath: "/atlas-migrations"
+      name: migrations
+    command:
+    - "cp"
+    - "-r"
+    - "/db/migrations"
+    - "/atlas-migrations"
+  containers:
+  - name: migration
+    env:
+    - name: CONFIG_FILE
+      value: defaults
+    image: infoblox/migrate:latest
+    imagePullPolicy: Always
+    volumeMounts:
+    - mountPath: /atlas-migrations
+      name: migrations
+    command:
+    - /migrate
+    args:
+    - "--verbose"
+    - "--source"
+    - "file://atlas-migrations/migrations"
+    - "--database.address"
+    - "postgres.default:5432"
+    - "--database.name"
+    - "{{ .Name }}"
+    - "--database.user"
+    - "postgres"
+    - "--database.password"
+    - "postgres"
+    - "up"
+  volumes:
+  - name: migrations
+    emptyDir: {}
