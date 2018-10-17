@@ -66,7 +66,8 @@ protobuf:
 	--grpc-gateway_out=logtostderr=true:. \{{ end }}{{ if .WithDatabase }}
 	--gorm_out=. \{{ end }}
 	--validate_out="lang=go:." \
-	--swagger_out=:. $(PROJECT_ROOT)/pkg/pb/service.proto
+	--swagger_out="atlas_patch=true:." \
+	$(PROJECT_ROOT)/pkg/pb/service.proto
 
 .PHONY: vendor
 vendor:
