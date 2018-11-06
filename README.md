@@ -10,6 +10,14 @@ These instructions will help you get the Atlas command-line tool up and running 
 ### Prerequisites
 Please install the following dependencies before running the Atlas command-line tool.
 
+#### protoc-gen-go
+Protobuf generator for go
+
+```sh
+go get -u github.com/golang/protobuf/protoc-gen-go
+```
+For more details visit [protoc-gen-go](https://developers.google.com/protocol-buffers/docs/gotutorial).
+
 #### dep
 
 This is a dependency management tool for Go. You can install `dep` with Homebrew:
