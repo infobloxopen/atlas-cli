@@ -11,4 +11,4 @@ WORKDIR /bin
 COPY --from=builder /go/src/{{ .Root }}/{{ .Name }}/bin/server .
 {{ if .WithGateway }}COPY pkg/pb/*.swagger.json tmp/www/swagger{{ end }}
 {{ if .WithDatabase }}COPY --from=builder /go/src/{{ .Root }}/{{ .Name }}/db/migrations /db/migrations/{{end}}
-ENTRYPOINT ["server"{{ if .WithGateway}}, "-swagger-dir", "tmp/www/swagger"{{ end }}]
+ENTRYPOINT ["server"{{ if .WithGateway}}, "--gateway.swaggerFile", "www/{{ .Name }}.swagger.json"{{ end }}]

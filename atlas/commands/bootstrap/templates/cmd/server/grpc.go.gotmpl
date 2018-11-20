@@ -7,6 +7,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"github.com/infobloxopen/atlas-app-toolkit/requestid"
 	{{ if .WithDatabase }}"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"{{ end }}
 )
@@ -16,16 +17,16 @@ func NewGRPCServer(logger *logrus.Logger{{ if .WithDatabase }}, dbConnectionStri
 	grpc.UnaryInterceptor(
 		grpc_middleware.ChainUnaryServer(
 			// Request-Id interceptor
-			//requestid.UnaryServerInterceptor(),
+			requestid.UnaryServerInterceptor(),
+
+			// logging middleware
+			grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger)),
 
 			// validation middleware
 			grpc_validator.UnaryServerInterceptor(),
 
 			// collection operators middleware
 			gateway.UnaryServerInterceptor(),
-
-			// logging middleware
-			grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger)),
 			),
 		),
 	)
