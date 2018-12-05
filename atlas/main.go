@@ -1,3 +1,4 @@
+//go:generate go-bindata -pkg templates -o templates/template-bindata.go templates/...
 package main
 
 import (

@@ -2,6 +2,7 @@ package commands
 
 import (
 	"flag"
+	"github.com/infobloxopen/atlas-cli/atlas/commands/update"
 
 	"github.com/infobloxopen/atlas-cli/atlas/commands/bootstrap"
 )
@@ -17,8 +18,11 @@ type Command interface {
 // GetCommandSet returns a mapping between command names and commands
 func GetCommandSet() map[string]Command {
 	cmdBootstrap := bootstrap.Bootstrap{}
+	cmdUpdate := update.Update{}
+
 	return map[string]Command{
 		cmdBootstrap.GetName(): cmdBootstrap,
+		cmdUpdate.GetName():    cmdUpdate,
 	}
 }
 

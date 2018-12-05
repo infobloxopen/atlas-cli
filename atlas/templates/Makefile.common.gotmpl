@@ -1,0 +1,101 @@
+PROJECT_ROOT		?= $(PWD)
+BUILD_PATH			?= bin
+DOCKERFILE_PATH		?= $(CURDIR)/docker
+
+# configuration for image names
+USERNAME			?= $(USER)
+GIT_COMMIT			?= $(shell git describe --dirty=-unsupported --always || echo pre-commit)
+IMAGE_VERSION		?= $(USERNAME)-dev-$(GIT_COMMIT)
+
+# configuration for server binary and image
+SERVER_BINARY 		?= $(BUILD_PATH)/server
+SERVER_PATH			?= $(PROJECT_ROOT)/cmd/server
+SERVER_DOCKERFILE	?= $(DOCKERFILE_PATH)/Dockerfile
+
+# configuration for the protobuf gentool
+SRCROOT_ON_HOST			?= $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+SRCROOT_IN_CONTAINER	?= /go/src/$(PROJECT_ROOT)
+DOCKER_RUNNER    		?= docker run -u `id -u`:`id -g` --rm -v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
+DOCKER_GENERATOR		?= infoblox/atlas-gentool:latest
+GENERATOR				?= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
+
+# configuration for building on host machine
+GO_CACHE			?= -pkgdir $(BUILD_PATH)/go-cache
+GO_BUILD_FLAGS		?= $(GO_CACHE) -i -v
+GO_TEST_FLAGS		?= -v -cover
+GO_PACKAGES			?= $(shell go list ./... | grep -v vendor)
+
+
+PROTOBUF_ARGS =  -I=$(PROJECT_ROOT)/vendor
+PROTOBUF_ARGS += --go_out=plugins=grpc:.
+PROTOBUF_ARGS += --validate_out="lang=go:."
+WITH_DATABASE ?= false
+WITH_GATEWAY  ?= false
+
+
+ifeq ($(WITH_DATABASE), true)
+PROTOBUF_ARGS += --gorm_out=.
+endif
+
+ifeq ($(WITH_GATEWAY), true)
+PROTOBUF_ARGS += --grpc-gateway_out=logtostderr=true:.
+PROTOBUF_ARGS += --swagger_out="atlas_patch=true:."
+endif
+
+.PHONY all: all-atlas
+all-atlas: vendor-atlas protobuf-atlas docker-atlas
+
+.PHONY fmt: fmt-atlas
+fmt-atlas:
+	@go fmt $(GO_PACKAGES)
+
+.PHONY test: test-atlas
+test-atlas: fmt-atlas
+	@go test $(GO_TEST_FLAGS) $(GO_PACKAGES)
+
+.PHONY docker: docker-atlas
+docker-atlas:
+	@docker build -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE):$(IMAGE_VERSION) .
+	@docker image prune -f --filter label=stage=server-intermediate
+
+.PHONY push: push-atlas
+push-atlas:
+ifndef IMAGE_REGISTRY
+	@echo "Please set IMAGE_REGISTRY variable in Makefile.vars to use push command"
+else
+	@docker push $(SERVER_IMAGE)
+endif
+
+.PHONY protobuf: protobuf-atlas
+protobuf-atlas:
+	@$(GENERATOR) \
+	$(PROTOBUF_ARGS) \
+	$(PROJECT_ROOT)/pkg/pb/service.proto
+
+.PHONY vendor: vendor-atlas
+vendor-atlas:
+	@dep ensure -vendor-only
+
+.PHONY vendor-update: vendor-update-atlas
+vendor-update-atlas:
+	@dep ensure
+
+.PHONY clean: clean-atlas
+clean-atlas:
+	@docker rmi -f $(shell docker images -q $(SERVER_IMAGE)) || true
+
+.PHONY migrate-up: migrate-up-atlas
+migrate-up-atlas:
+ifeq ($(WITH_DATABASE), true)
+	@$(DOCKER_RUNNER) --net="host" ${MIGRATETOOL_IMAGE} --verbose --path=$(MIGRATION_PATH_IN_CONTAINER)/ --database.dsn=$(DATABASE_URL) up
+else
+	@echo "Your application doesn't has database migrations not supprted"
+endif
+
+.PHONY migrate-down: migrate-down-atlas
+migrate-down-atlas:
+ifeq ($(WITH_DATABASE), true)
+	@$(DOCKER_RUNNER) --net="host" ${MIGRATETOOL_IMAGE} --verbose --path=$(MIGRATION_PATH_IN_CONTAINER)/ --database.dsn=$(DATABASE_URL) down
+else
+	@echo "Your application doesn't has database migrations not supprted"
+endif
