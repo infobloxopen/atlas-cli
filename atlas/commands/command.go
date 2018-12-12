@@ -29,5 +29,6 @@ func GetCommandSet() map[string]Command {
 // GetCommandNames returns a list of all the command names
 func GetCommandNames() []string {
 	cmdBootstrap := bootstrap.Bootstrap{}
-	return []string{cmdBootstrap.GetName()}
+	cmdUpdate    := update.Update{}
+	return []string{cmdBootstrap.GetName(), cmdUpdate.GetName()}
 }
