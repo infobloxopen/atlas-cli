@@ -23,6 +23,7 @@ DOCKER_GENERATOR	:= infoblox/atlas-gentool:latest
 GENERATOR		:= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
 {{ if .WithDatabase }}
 # configuration for the database
+WITH_DATABASE       = true
 DATABASE_ADDRESS	?= localhost:5432
 DATABASE_USERNAME	?= postgres
 DATABASE_PASSWORD	?= postgres
@@ -38,54 +39,7 @@ GO_BUILD_FLAGS		?= $(GO_CACHE) -i -v
 GO_TEST_FLAGS		?= -v -cover
 GO_PACKAGES		:= $(shell go list ./... | grep -v vendor)
 
-.PHONY: all
-all: vendor protobuf docker
-
-.PHONY: fmt
-fmt:
-	@go fmt $(GO_PACKAGES)
-
-.PHONY: test
-test: fmt
-	@go test $(GO_TEST_FLAGS) $(GO_PACKAGES)
-
-.PHONY: docker
-docker:
-	@docker build -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE):$(IMAGE_VERSION) .
-	@docker image prune -f --filter label=stage=server-intermediate
-{{- if .Registry }}
-.PHONY: push
-push:
-	@docker push $(SERVER_IMAGE)
-{{ end }}
-.PHONY: protobuf
-protobuf:
-	@$(GENERATOR) \
-	-I=$(PROJECT_ROOT)/vendor \
-	--go_out=plugins=grpc:. \{{ if .WithGateway }}
-	--grpc-gateway_out=logtostderr=true:. \{{ end }}{{ if .WithDatabase }}
-	--gorm_out=. \{{ end }}
-	--validate_out="lang=go:." \
-	--swagger_out="atlas_patch=true:." \
-	$(PROJECT_ROOT)/pkg/pb/service.proto
-
-.PHONY: vendor
-vendor:
-	@dep ensure -vendor-only
-
-.PHONY: vendor-update
-vendor-update:
-	@dep ensure
-
-.PHONY: clean
-clean:
-	@docker rmi -f $(shell docker images -q $(SERVER_IMAGE)) || true
-{{ if .WithDatabase }}
-.PHONY: migrate-up
-migrate-up:
-	@$(DOCKER_RUNNER) --net="host" ${MIGRATETOOL_IMAGE} --verbose --path=$(MIGRATION_PATH_IN_CONTAINER)/ --database.dsn=$(DATABASE_URL) up
-
-.PHONY: migrate-down
-migrate-down:
-	@$(DOCKER_RUNNER) --net="host" ${MIGRATETOOL_IMAGE} --verbose --path=$(MIGRATION_PATH_IN_CONTAINER)/ --database.dsn=$(DATABASE_URL) down
-{{ end }}
+#configuration for gateway
+{{ if .WithGateway}}
+WITH_GATEWAY = true
+{{end}}

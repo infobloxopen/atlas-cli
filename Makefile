@@ -2,8 +2,8 @@ install:
 	@cd atlas/ && go install
 
 templating:
-	@cd atlas/commands/bootstrap && go generate
-	@go fmt atlas/commands/bootstrap/templates/template-bindata.go
+	@cd atlas/ && go generate
+	@go fmt atlas/templates/template-bindata.go
 
 test:
 	@go test -v ./...
