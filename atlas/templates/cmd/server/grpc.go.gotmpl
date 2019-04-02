@@ -16,11 +16,11 @@ func NewGRPCServer(logger *logrus.Logger{{ if .WithDatabase }}, dbConnectionStri
 	grpcServer := grpc.NewServer(
 	grpc.UnaryInterceptor(
 		grpc_middleware.ChainUnaryServer(
-			// Request-Id interceptor
-			requestid.UnaryServerInterceptor(),
-
 			// logging middleware
 			grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger)),
+
+			// Request-Id interceptor
+			requestid.UnaryServerInterceptor(),
 
 			// validation middleware
 			grpc_validator.UnaryServerInterceptor(),
