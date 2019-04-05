@@ -1,0 +1,115 @@
+{{range $r := .R }}
+
+// ------------------------------------------------------
+// {{$r.NameCamel}} represents a particular AWS Region
+// ------------------------------------------------------
+message {{$r.NameCamel}} {
+  option (gorm.opts) = {
+      ormable: true,
+      multi_account: false
+  };
+
+  // The {{$r.NameCamel}} identifier.
+  atlas.rpc.Identifier id = 1 [(gorm.field).tag = {type: "serial"  primary_key: true}];
+
+  // The name of the {{$r.NameCamel}}
+  string name = 2;
+
+  // The description of the {{$r.NameCamel}}
+  string description = 3;
+}
+
+message Create{{$r.NameCamel}}Request {
+  {{$r.NameCamel}} payload = 1;
+}
+
+message Create{{$r.NameCamel}}Response {
+  {{$r.NameCamel}} result = 1;
+}
+
+message Read{{$r.NameCamel}}Request {
+  atlas.rpc.Identifier id = 1;
+  infoblox.api.FieldSelection fields = 2;
+}
+
+message Read{{$r.NameCamel}}Response {
+  {{$r.NameCamel}} result = 1;
+}
+
+message Update{{$r.NameCamel}}Request {
+  {{$r.NameCamel}} payload = 1;
+  google.protobuf.FieldMask fields = 2;
+}
+
+message Update{{$r.NameCamel}}Response {
+  {{$r.NameCamel}} result = 1;
+}
+
+message Delete{{$r.NameCamel}}Request {
+  atlas.rpc.Identifier id = 1;
+}
+
+message Delete{{$r.NameCamel}}Response {}
+
+message List{{$r.NameCamel}}Request {
+  infoblox.api.Filtering filter = 1;
+  infoblox.api.Sorting order_by = 2;
+  infoblox.api.FieldSelection fields = 3;
+  infoblox.api.Pagination paging = 4;
+}
+
+message List{{$r.NameCamels}}Response {
+  repeated {{$r.NameCamel}} results = 1;
+  infoblox.api.PageInfo page = 2;
+}
+
+service {{$r.NameCamels}} {
+  option (gorm.server) = {
+      autogen: true,
+      txn_middleware: false,
+    };
+
+  // Use this method to create a {{$r.NameCamel}} information.
+  rpc Create (Create{{$r.NameCamel}}Request) returns (Create{{$r.NameCamel}}Response) {
+    option (google.api.http) = {
+            post: "/{{$r.NameSnakes}}"
+            body: "payload"
+        };
+  }
+
+  // Use this method to read a {{$r.NameCamel}} information by identifier.
+  rpc Read (Read{{$r.NameCamel}}Request) returns (Read{{$r.NameCamel}}Response) {
+    option (google.api.http) = {
+            get: "/{{$r.NameSnakes}}/{id.resource_id}"
+        };
+  }
+
+  // Use this method to update a {{$r.NameCamel}} information.
+  rpc Update (Update{{$r.NameCamel}}Request) returns (Update{{$r.NameCamel}}Response) {
+    option (atlas_validate.method).allow_unknown_fields = false;
+    option (google.api.http) = {
+            put: "/{{$r.NameSnakes}}/{payload.id.resource_id}"
+            body: "payload"
+            additional_bindings: {
+                patch: "/{{$r.NameSnakes}}/{payload.id.resource_id}"
+                body: "payload"
+            }
+    };
+  }
+
+  // Use this method to delete a particular {{$r.NameCamel}}.
+  rpc Delete (Delete{{$r.NameCamel}}Request) returns (Delete{{$r.NameCamel}}Response) {
+    option (google.api.http) = {
+            delete: "/{{$r.NameSnakes}}/{id.resource_id}"
+        };
+    option (gorm.method).object_type = "{{$r.NameCamel}}";
+  }
+
+  // Use this method to retrieve all the {{$r.NameCamels}}.
+  rpc List (List{{$r.NameCamel}}Request) returns (List{{$r.NameCamels}}Response) {
+    option (google.api.http) = {
+            get: "/{{$r.NameSnakes}}"
+        };
+  }
+}
+{{ end }}

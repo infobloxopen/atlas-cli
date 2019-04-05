@@ -1,0 +1,15 @@
+
+CREATE TABLE {{(index .R 0).NameSnakes}} (
+  id serial primary key,
+  account_id varchar(255),
+  created_at timestamptz DEFAULT current_timestamp,
+  updated_at timestamptz DEFAULT NULL,
+  name varchar(255) DEFAULT NULL,
+  description varchar(255) DEFAULT NULL
+);
+
+CREATE TRIGGER {{(index .R 0).NameSnakes}}_updated_at
+  BEFORE UPDATE OR INSERT ON {{(index .R 0).NameSnakes}}
+  FOR EACH ROW
+  EXECUTE PROCEDURE set_updated_at();
+

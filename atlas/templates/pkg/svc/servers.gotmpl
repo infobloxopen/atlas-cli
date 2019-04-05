@@ -1,0 +1,9 @@
+{{ range $r := .R }}
+type {{$r.NameLowerCamels}}Server struct {
+	*pb.{{$r.NameCamels}}DefaultServer
+}
+// New{{$r.NameCamels}}Server returns an instance of the default {{$r.NameCamel}} server interface
+func New{{$r.NameCamels}}Server() (pb.{{$r.NameCamels}}Server, error) {
+	return &{{$r.NameLowerCamels}}Server{&pb.{{$r.NameCamels}}DefaultServer{}}, nil
+}
+{{ end }}

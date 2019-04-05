@@ -7,13 +7,12 @@ import (
 	"github.com/infobloxopen/atlas-cli/atlas/application"
 	"github.com/infobloxopen/atlas-cli/atlas/utill"
 	"go/build"
+	"golang.org/x/tools/imports"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-
-	"golang.org/x/tools/imports"
 )
 
 const (
@@ -28,6 +27,7 @@ const (
 	flagWithDatabase = "db"
 	flagWithHealth   = "health"
 	flagWithPubsub   = "pubsub"
+	flagExpandName 	 = "expand"
 )
 
 var (
@@ -40,6 +40,7 @@ var (
 	initializeDatabase = initialize.Bool(flagWithDatabase, false, "initialize the application with database folders")
 	initializeHealth   = initialize.Bool(flagWithHealth, false, "initialize the application with internal health checks")
 	initializePubsub   = initialize.Bool(flagWithPubsub, false, "initialize the application with a pubsub example")
+	initializeExpand   = initialize.String(flagExpandName, "", "the name of the input file for the `expand` command (optional)")
 )
 
 // bootstrap implements the command interface for project intialization
@@ -63,6 +64,7 @@ func (b Bootstrap) Run() error {
 	if err != nil {
 		return initializationError{err: err}
 	}
+
 	app := application.Application{
 		Name:         *initializeName,
 		Registry:     *initializeRegistry,
@@ -71,9 +73,23 @@ func (b Bootstrap) Run() error {
 		WithDatabase: *initializeDatabase,
 		WithHealth:   *initializeHealth,
 		WithPubsub:   *initializePubsub,
+		ExpandName:   *initializeExpand,
 	}
+
 	if err := app.Initialize(); err != nil {
 		return initializationError{err: err}
+	}
+
+	if app.ExpandName != "" {
+		if err := expandResource(app.Name, app.ExpandName, app.WithDatabase); err != nil {
+			return err
+		}
+		if err := CombineFiles("pkg/pb/service.proto", "pkg/pb/" + app.Name + ".proto"); err != nil {
+				return err
+		}
+		if err := CombineFiles("pkg/svc/zserver.go", "pkg/svc/servers.go"); err != nil {
+			return err
+		}
 	}
 
 	if err := generateProtobuf(); err != nil {

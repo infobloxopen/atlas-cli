@@ -1,0 +1,30 @@
+package main
+
+import (
+	"github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/jinzhu/gorm"
+	"github.com/seizadi/cmdb/pkg/pb"
+	"github.com/seizadi/cmdb/pkg/svc"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+)
+
+func CreateServer(logger *logrus.Logger, db *gorm.DB, interceptors []grpc.UnaryServerInterceptor) (*grpc.Server, error) {
+	// create new gRPC grpcServer with middleware chain
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(interceptors...)))
+	
+	// register all of our services into the grpcServer
+	//s, err := svc.NewBasicServer(db)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//pb.RegisterCmdbServer(grpcServer, s)
+{{ range $r := .R }}
+	{{$r.NameSnake}}, err := svc.New{{$r.NameCamels}}Server()
+	if err != nil {
+		return nil, err
+	}
+	pb.Register{{$r.NameCamels}}Server(grpcServer, {{$r.NameSnake}})
+{{ end }}
+	return grpcServer, nil
+}
