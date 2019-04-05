@@ -33,6 +33,9 @@ DATABASE_URL        ?= postgres://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DA
 MIGRATETOOL_IMAGE           = infoblox/migrate:latest
 MIGRATION_PATH_IN_CONTAINER = $(SRCROOT_IN_CONTAINER)/db/migrations
 {{ end }}
+{{ if .ExpandName }}
+WITH_EXPAND         = true
+{{ end }}
 # configuration for building on host machine
 GO_CACHE		:= -pkgdir $(BUILD_PATH)/go-cache
 GO_BUILD_FLAGS		?= $(GO_CACHE) -i -v
