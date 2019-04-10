@@ -1,8 +1,7 @@
 {{range $r := .R }}
 
-// ------------------------------------------------------
-// {{$r.NameCamel}} represents a particular AWS Region
-// ------------------------------------------------------
+// {{$r.NameCamel}}
+
 message {{$r.NameCamel}} {
   option (gorm.opts) = {
       ormable: true,

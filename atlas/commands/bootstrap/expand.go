@@ -3,11 +3,13 @@ package bootstrap
 import (
 	"bufio"
 	"fmt"
+	"github.com/jinzhu/inflection"
 	"io"
 	"log"
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/iancoleman/strcase"
@@ -28,6 +30,7 @@ type templateResource struct {
 	NameSnakes string
 	MigrateVer string
 	Path string
+	WithDatabase bool
 }
 
 func expandResource(appName, expandName string, withDatabase bool) error {
@@ -56,6 +59,7 @@ func expandResource(appName, expandName string, withDatabase bool) error {
 			NameSnake: strcase.ToSnake(name),
 			NameSnakes: strPlural(strcase.ToSnake(name)),
 			MigrateVer: migrateStr,
+			WithDatabase: withDatabase,
 		}
 		r = append(r, resource)
 		migrateNum += 1
@@ -128,10 +132,23 @@ func readLines(path string) ([]string, error) {
 	var lines []string
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		if len(scanner.Text()) > 0 && IsLetter(scanner.Text()) {
-			lines = append(lines, scanner.Text())
+		line := scanner.Text()
+		if strings.Contains(line, ",") {
+			var plural = strings.Split(line, ",")
+			if len(plural) != 2 {
+				fmt.Printf("Lines containing a comma must have exactly two words with only letters, separated by one comma. Ignoring this line: %q", line)
+			} else { // length is exactly 2
+				if IsLetter(plural[0]) && IsLetter(plural[1]) {
+					lines = append(lines, plural[0])
+					inflection.AddIrregular(plural[0], plural[1])
+				} else {
+					fmt.Printf("Lines containing a comma must have exactly two words with only letters, separated by one comma. Ignoring this line: %q", line)
+				}
+			}
+		} else if len(line) > 0 && IsLetter(line) {
+			lines = append(lines, line)
 		} else {
-			fmt.Println("Ignoring resource in config file with value: <" + scanner.Text() + ">. Resource must be a single word with only letters.")
+			fmt.Printf("Ignoring resource in config file with value: %q. Resource must be a single word with only letters.\r\n", line)
 		}
 	}
 	return lines, scanner.Err()
@@ -147,19 +164,18 @@ func IsLetter(s string) bool {
 }
 
 func strPlural(s string) string {
-	// Had some use cases like AwsRds or Kubernetes and tried to
-	// fix the plural since plural is not right like: Kubernetess
-	// This is fine for URLs or Table names but breaks proto since
-	// message and service definitions have collision:
-	// sc-l-seizadi:cmdb seizadi$ make protobuf
-	// github.com/seizadi/cmdb/pkg/pb/cmdb.proto:144:9: "AwsRds" is already defined in "api.cmdb".
-	// github.com/seizadi/cmdb/pkg/pb/cmdb.proto:1087:9: "Kubernetes" is already defined in "api.cmdb".
-	// So we need to have people pick names that have natural plural so in the above case
-	// AwsRds -> AwsRdsInstance or Kubernetes => KubeCluster
-	//if (s[len(s)-1:] == "s") {
-	//	return s
-	//}
-	return s + "s"
+	// For use cases with words that end in s, user may add unique pluralization
+	// If they don't want the plural of 'Artifacts' for example to be 'Artifactss'
+	// In their input file for the -expand argument they may add a comma-separated line
+	// The first word is the singular form, the second word is the plural form
+	// If no word is given, the default "+s" method is used
+
+	plural := inflection.Plural(s)
+	if s == plural {
+		return s + "s"
+	} else {
+		return plural
+	}
 }
 
 

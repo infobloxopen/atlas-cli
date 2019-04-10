@@ -96,6 +96,18 @@ atlas init-app -name=my-application -registry=infoblox
 #   is a list of strings (letters only), one service name on each line
 atlas init-app -name=my-application -expand=expand.txt -db=true
 ```
+
+```sh
+# example `expand.txt` file for use with -expand option
+# Each line must either be a single string of letters only, 
+# or two strings separated by a single comma. The latter option
+# Is for the use case where the user wants a customized pluralization
+# of a word. In the example below, "Artifacts" will pluralize to 
+# "Artifactss", and "Kubernetes" will pluralize to "KubeCluster"
+
+Artifacts
+Kubernetes,KubeCluster
+```
 Images names will vary depending on whether or not a Docker registry has been provided.
 
 ```sh
