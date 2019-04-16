@@ -7,7 +7,6 @@ import (
 
 func RegisterGatewayEndpoints() gateway.Option {
 	return gateway.WithEndpointRegistration(viper.GetString("server.version"),
-		//pb.RegisterCmdbHandlerFromEndpoint,
 {{- range $r := .R }}
 		pb.Register{{$r.NameCamels}}HandlerFromEndpoint,
 {{- end }}

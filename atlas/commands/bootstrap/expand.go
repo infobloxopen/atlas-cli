@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 	"text/template"
 
@@ -46,11 +45,7 @@ func expandResource(appName, expandName string, withDatabase bool) error {
 	migrateStr := ""
 
 	for _, name := range lines {
-		if (migrateNum > 9) {
-			migrateStr = "000" + strconv.Itoa(migrateNum)
-		} else {
-			migrateStr = "0000" + strconv.Itoa(migrateNum)
-		}
+		migrateStr = fmt.Sprintf("%05d", migrateNum)
 		resource := templateResource {
 			NameCamel: strcase.ToCamel(name),
 			NameCamels: strPlural(strcase.ToCamel(name)),
@@ -133,7 +128,7 @@ func readLines(path string) ([]string, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.Contains(line, ",") {
+		/*if strings.Contains(line, ",") {
 			var plural = strings.Split(line, ",")
 			if len(plural) != 2 {
 				fmt.Printf("Lines containing a comma must have exactly two words with only letters, separated by one comma. Ignoring this line: %q", line)
@@ -149,6 +144,15 @@ func readLines(path string) ([]string, error) {
 			lines = append(lines, line)
 		} else {
 			fmt.Printf("Ignoring resource in config file with value: %q. Resource must be a single word with only letters.\r\n", line)
+		}*/
+		var words = strings.Split(line, ",")
+		if len(words) == 1 && IsLetter(words[0]) {
+			lines = append(lines, words[0])
+		} else if len(words) == 2 && IsLetter(words[0]) && IsLetter(words[1]) {
+			lines = append(lines, words[0])
+			inflection.AddIrregular(words[0], words[1])
+		} else {
+			fmt.Printf("Ignoring resource in config file with value: %q. Resource must be a single word with only letters, or exactly two words separated by a comma.\r\n", line)
 		}
 	}
 	return lines, scanner.Err()
