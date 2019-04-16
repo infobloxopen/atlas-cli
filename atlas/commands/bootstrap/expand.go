@@ -128,23 +128,6 @@ func readLines(path string) ([]string, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		/*if strings.Contains(line, ",") {
-			var plural = strings.Split(line, ",")
-			if len(plural) != 2 {
-				fmt.Printf("Lines containing a comma must have exactly two words with only letters, separated by one comma. Ignoring this line: %q", line)
-			} else { // length is exactly 2
-				if IsLetter(plural[0]) && IsLetter(plural[1]) {
-					lines = append(lines, plural[0])
-					inflection.AddIrregular(plural[0], plural[1])
-				} else {
-					fmt.Printf("Lines containing a comma must have exactly two words with only letters, separated by one comma. Ignoring this line: %q", line)
-				}
-			}
-		} else if len(line) > 0 && IsLetter(line) {
-			lines = append(lines, line)
-		} else {
-			fmt.Printf("Ignoring resource in config file with value: %q. Resource must be a single word with only letters.\r\n", line)
-		}*/
 		var words = strings.Split(line, ",")
 		if len(words) == 1 && IsLetter(words[0]) {
 			lines = append(lines, words[0])

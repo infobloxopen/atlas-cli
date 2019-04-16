@@ -105,7 +105,7 @@ atlas init-app -name=my-application -expand=expand.txt -db=true
 # of a word. In the example below, "Artifacts" will pluralize to 
 # "Artifactss", and "Kubernetes" will pluralize to "KubeCluster"
 # In general, the best practice for object names should be 
-# either <singular> or <singular.plural>
+# either <singular> or <singular,plural>
 
 Artifacts
 AwsInstance
