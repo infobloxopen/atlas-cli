@@ -14,6 +14,12 @@ import (
 
 func NewGRPCServer(logger *logrus.Logger{{ if .WithDatabase }}, dbConnectionString string{{ end }}) (*grpc.Server, error){
 	grpcServer := grpc.NewServer(
+    grpc.KeepaliveParams(
+        keepalive.ServerParameters{
+            Time:    time.Duration(20) * time.Second,
+            Timeout: time.Duration(10) * time.Second,
+        },
+    ),
 	grpc.UnaryInterceptor(
 		grpc_middleware.ChainUnaryServer(
 			// logging middleware
