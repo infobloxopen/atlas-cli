@@ -14,12 +14,12 @@ import (
 
 func NewGRPCServer(logger *logrus.Logger{{ if .WithDatabase }}, dbConnectionString string{{ end }}) (*grpc.Server, error){
 	grpcServer := grpc.NewServer(
-    grpc.KeepaliveParams(
-        keepalive.ServerParameters{
-            Time:    time.Duration(20) * time.Second,
-            Timeout: time.Duration(10) * time.Second,
-        },
-    ),
+	grpc.KeepaliveParams(
+		keepalive.ServerParameters{
+		    Time:    time.Duration(viper.GetString("config.keepalive.time")) * time.Second,
+            Timeout: time.Duration(viper.GetString("config.keepalive.timeout")) * time.Second,
+		},
+	),
 	grpc.UnaryInterceptor(
 		grpc_middleware.ChainUnaryServer(
 			// logging middleware
