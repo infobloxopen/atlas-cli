@@ -12,8 +12,8 @@ func CreateServer(logger *logrus.Logger, db *gorm.DB, interceptors []grpc.UnaryS
 	grpcServer := grpc.NewServer(
 	grpc.KeepaliveParams(
 		keepalive.ServerParameters{
-			Time:    time.Duration(viper.GetString("config.keepalive.time")) * time.Second,
-			Timeout: time.Duration(viper.GetString("config.keepalive.timeout")) * time.Second,
+			Time:    time.Duration(viper.GetTime("config.keepalive.time")) * time.Second,
+			Timeout: time.Duration(viper.GetTime("config.keepalive.timeout")) * time.Second,
 		},
 	),grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(interceptors...)))
 	
