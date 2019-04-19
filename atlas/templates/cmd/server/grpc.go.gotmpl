@@ -16,8 +16,8 @@ func NewGRPCServer(logger *logrus.Logger{{ if .WithDatabase }}, dbConnectionStri
 	grpcServer := grpc.NewServer(
 	grpc.KeepaliveParams(
 		keepalive.ServerParameters{
-            Time:    time.Duration(viper.GetInt("config.keepalive.time")) * time.Second,
-            Timeout: time.Duration(viper.GetInt("config.keepalive.timeout")) * time.Second,
+			Time:    time.Duration(viper.GetInt("config.keepalive.time")) * time.Second,
+			Timeout: time.Duration(viper.GetInt("config.keepalive.timeout")) * time.Second,
 		},
 	),
 	grpc.UnaryInterceptor(
