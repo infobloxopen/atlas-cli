@@ -60,14 +60,15 @@ $ cd my-application
 #### Flags
 Here's the full set of flags for the `init-app` command.
 
-| Flag          | Description                                                     | Required      | Default Value |
-| ------------- | --------------------------------------------------------------- | ------------- | ------------- |
-| `name`        | The name of the new application                                 | Yes           | N/A           |
-| `db`          | Bootstrap the application with PostgreSQL database integration  | No            | `false`       |
-| `gateway`     | Initialize the application with a gRPC gateway                  | No            | `false`       |
-| `health`      | Initialize the application with internal health checks          | No            | `false`       |
-| `pubsub`      | Initialize the application with a atlas-pubsub example          | No            | `false`       |
-| `registry`    | The Docker registry where application images are pushed         | No            | `""`          |
+| Flag          | Description                                                         | Required      | Default Value |
+| ------------- | ------------------------------------------------------------------- | ------------- | ------------- |
+| `name`        | The name of the new application                                     | Yes           | N/A           |
+| `db`          | Bootstrap the application with PostgreSQL database integration      | No            | `false`       |
+| `gateway`     | Initialize the application with a gRPC gateway                      | No            | `false`       |
+| `health`      | Initialize the application with internal health checks              | No            | `false`       |
+| `pubsub`      | Initialize the application with a atlas-pubsub example              | No            | `false`       |
+| `registry`    | The Docker registry where application images are pushed             | No            | `""`          |
+| `create`      | Initialize the application with additional services based on a file | No            | `""`          |
 
 You can run `atlas init-app --help` to see these flags and their descriptions on the command-line.
 
@@ -87,6 +88,28 @@ atlas init-app -name=my-application -db
 ```sh
 # specifies a docker registry
 atlas init-app -name=my-application -registry=infoblox
+```
+
+```sh
+# generates an application with additional services
+# the input file (expand.txt in the example below) 
+#   is a list of strings (letters only), one service name on each line
+atlas init-app -name=my-application -expand=expand.txt -db=true
+```
+
+```sh
+# example `expand.txt` file for use with -expand option
+# Each line must either be a single string of letters only, 
+# or two strings separated by a single comma. The latter option
+# Is for the use case where the user wants a customized pluralization
+# of a word. In the example below, "Artifacts" will pluralize to 
+# "Artifactss", and "Kubernetes" will pluralize to "KubeCluster"
+# In general, the best practice for object names should be 
+# either <singular> or <singular,plural>
+
+Artifacts
+AwsInstance
+Kubernetes,KubeCluster
 ```
 Images names will vary depending on whether or not a Docker registry has been provided.
 

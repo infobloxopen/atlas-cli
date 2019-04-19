@@ -5,8 +5,16 @@ package service;
 import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
 import "github.com/lyft/protoc-gen-validate/validate/validate.proto";
-import "protoc-gen-swagger/options/annotations.proto";{{ if .WithDatabase }}
+import "protoc-gen-swagger/options/annotations.proto";{{ if or .ExpandName .WithDatabase }}
 import "github.com/infobloxopen/protoc-gen-gorm/options/gorm.proto";{{ end }}
+{{ if .ExpandName }}
+import "google/protobuf/field_mask.proto";
+//import "github.com/infobloxopen/protoc-gen-gorm/types/types.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resource.proto";
+import "github.com/infobloxopen/protoc-gen-atlas-query-validate/options/query_validate.proto";
+import "github.com/infobloxopen/protoc-gen-atlas-validate/options/atlas_validate.proto";
+{{ end }}
 
 option go_package = "{{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Name }}{{ end }}/pkg/pb;pb";
 
@@ -31,7 +39,6 @@ option go_package = "{{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Name }}{
 message VersionResponse {
   string version = 1;
 }
-
 {{ if .WithPubsub }}// Example Publish Response
 message PublishResponse {
   string status = 1;
@@ -41,7 +48,6 @@ message PublishResponse {
 message PublishRequest {
   string message = 1;
 }{{end}}
-
 // TODO: Define the {{ .Name | Service }} service and its methods. Feel free
 // to change the name of {{ .Name | Service }} to better-suit your naming
 // conventions.

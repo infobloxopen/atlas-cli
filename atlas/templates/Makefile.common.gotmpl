@@ -40,6 +40,10 @@ ifeq ($(WITH_DATABASE), true)
 PROTOBUF_ARGS += --gorm_out=.
 endif
 
+ifeq ($(WITH_EXPAND), true)
+PROTOBUF_ARGS += --grpc-gateway_out=logtostderr=true:.
+endif
+
 ifeq ($(WITH_GATEWAY), true)
 PROTOBUF_ARGS += --grpc-gateway_out=logtostderr=true:.
 PROTOBUF_ARGS += --swagger_out="atlas_patch=true:."

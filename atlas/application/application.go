@@ -19,6 +19,7 @@ type Application struct {
 	WithDatabase bool
 	WithHealth   bool
 	WithPubsub   bool
+	ExpandName	 string
 }
 
 // Initialize generates brand-new application
