@@ -1,46 +1,46 @@
-PROJECT_ROOT		:= {{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Name }}{{ end }}
-BUILD_PATH		:= bin
-DOCKERFILE_PATH		:= $(CURDIR)/docker
+PROJECT_ROOT            := {{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Name }}{{ end }}
+BUILD_PATH              := bin
+DOCKERFILE_PATH         := $(CURDIR)/docker
 
 # configuration for image names
-USERNAME		:= $(USER)
-GIT_COMMIT		:= $(shell git describe --dirty=-unsupported --always --tags || echo pre-commit)
-IMAGE_VERSION		?= $(GIT_COMMIT)-$(USERNAME)
+USERNAME                := $(USER)
+GIT_COMMIT              := $(shell git describe --dirty=-unsupported --always --tags || echo pre-commit)
+IMAGE_VERSION           ?= $(GIT_COMMIT)-$(USERNAME)
 {{ if .Registry }}IMAGE_REGISTRY ?= {{ .Registry}}
 {{ end}}
 # configuration for server binary and image
-SERVER_BINARY 		:= $(BUILD_PATH)/server
-SERVER_PATH		:= $(PROJECT_ROOT)/cmd/server
-SERVER_IMAGE		:= {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}-server
-SERVER_DOCKERFILE	:= $(DOCKERFILE_PATH)/Dockerfile
+SERVER_BINARY           := $(BUILD_PATH)/server
+SERVER_PATH             := $(PROJECT_ROOT)/cmd/server
+SERVER_IMAGE            := {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}-server
+SERVER_DOCKERFILE       := $(DOCKERFILE_PATH)/Dockerfile
 
 # configuration for the protobuf gentool
-SRCROOT_ON_HOST		:= $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
-SRCROOT_IN_CONTAINER	:= /go/src/$(PROJECT_ROOT)
-DOCKER_RUNNER    	:= docker run -u `id -u`:`id -g` --rm
-DOCKER_RUNNER		+= -v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
-DOCKER_GENERATOR	:= infoblox/atlas-gentool:latest
-GENERATOR		:= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
+SRCROOT_ON_HOST         := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+SRCROOT_IN_CONTAINER    := /go/src/$(PROJECT_ROOT)
+DOCKER_RUNNER           := docker run -u `id -u`:`id -g` --rm
+DOCKER_RUNNER           += -v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
+DOCKER_GENERATOR        := infoblox/atlas-gentool:latest
+GENERATOR               := $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
 {{ if .WithDatabase }}
 # configuration for the database
-WITH_DATABASE       = true
-DATABASE_ADDRESS	?= localhost:5432
-DATABASE_USERNAME	?= postgres
-DATABASE_PASSWORD	?= postgres
-DATABASE_NAME       = {{ .Name | Database }}
-DATABASE_URL        ?= postgres://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DATABASE_ADDRESS)/$(DATABASE_NAME)?sslmode=disable
+WITH_DATABASE           = true
+DATABASE_ADDRESS        ?= localhost:5432
+DATABASE_USERNAME       ?= postgres
+DATABASE_PASSWORD       ?= postgres
+DATABASE_NAME           = {{ .Name | Database }}
+DATABASE_URL            ?= postgres://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DATABASE_ADDRESS)/$(DATABASE_NAME)?sslmode=disable
 
 MIGRATETOOL_IMAGE           = infoblox/migrate:latest
 MIGRATION_PATH_IN_CONTAINER = $(SRCROOT_IN_CONTAINER)/db/migrations
 {{ end }}
 {{ if .ExpandName }}
-WITH_EXPAND         = true
+WITH_EXPAND             = true
 {{ end }}
 # configuration for building on host machine
-GO_CACHE		:= -pkgdir $(BUILD_PATH)/go-cache
-GO_BUILD_FLAGS		?= $(GO_CACHE) -i -v
-GO_TEST_FLAGS		?= -v -cover
-GO_PACKAGES		:= $(shell go list ./... | grep -v vendor)
+GO_CACHE                := -pkgdir $(BUILD_PATH)/go-cache
+GO_BUILD_FLAGS          ?= $(GO_CACHE) -i -v
+GO_TEST_FLAGS           ?= -v -cover
+GO_PACKAGES             := $(shell go list ./... | grep -v vendor)
 
 #configuration for gateway
 {{ if .WithGateway}}
