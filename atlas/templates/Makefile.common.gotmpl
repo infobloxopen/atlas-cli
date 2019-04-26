@@ -94,15 +94,15 @@ clean-atlas:
 .PHONY migrate-up: migrate-up-atlas
 migrate-up-atlas:
 ifeq ($(WITH_DATABASE), true)
-	@$(DOCKER_RUNNER) --net="host" ${MIGRATETOOL_IMAGE} --verbose --path=$(MIGRATION_PATH_IN_CONTAINER)/ --database.dsn=$(DATABASE_URL) up
+	@$(DOCKER_RUNNER) --net="host" $(MIGRATETOOL_IMAGE) --verbose --path=$(MIGRATION_PATH_IN_CONTAINER)/ --database.dsn=$(DATABASE_URL) up
 else
-	@echo "Your application doesn't has database migrations not supprted"
+	@echo "Your application doesn't have database, migrations aren't supported"
 endif
 
 .PHONY migrate-down: migrate-down-atlas
 migrate-down-atlas:
 ifeq ($(WITH_DATABASE), true)
-	@$(DOCKER_RUNNER) --net="host" ${MIGRATETOOL_IMAGE} --verbose --path=$(MIGRATION_PATH_IN_CONTAINER)/ --database.dsn=$(DATABASE_URL) down
+	@$(DOCKER_RUNNER) --net="host" $(MIGRATETOOL_IMAGE) --verbose --path=$(MIGRATION_PATH_IN_CONTAINER)/ --database.dsn=$(DATABASE_URL) down
 else
-	@echo "Your application doesn't has database migrations not supprted"
+	@echo "Your application doesn't have database, migrations aren't supported"
 endif
