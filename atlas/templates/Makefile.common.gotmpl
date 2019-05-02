@@ -45,8 +45,8 @@ PROTOBUF_ARGS += --grpc-gateway_out=logtostderr=true:.
 endif
 
 ifeq ($(WITH_GATEWAY), true)
-PROTOBUF_ARGS += --grpc-gateway_out=logtostderr=true:.
-PROTOBUF_ARGS += --swagger_out="atlas_patch=true:."
+PROTOBUF_ARGS += --grpc-gateway_out="logtostderr=true,allow_delete_body=true:."
+PROTOBUF_ARGS += --swagger_out="atlas_patch=true,allow_delete_body=true:."
 endif
 
 .PHONY all: all-atlas
