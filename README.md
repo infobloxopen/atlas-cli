@@ -68,7 +68,7 @@ Here's the full set of flags for the `init-app` command.
 | `health`      | Initialize the application with internal health checks              | No            | `false`       |
 | `pubsub`      | Initialize the application with a atlas-pubsub example              | No            | `false`       |
 | `registry`    | The Docker registry where application images are pushed             | No            | `""`          |
-| `create`      | Initialize the application with additional services based on a file | No            | `""`          |
+| `expand`      | Initialize the application with additional services based on a file | No            | `""`          |
 
 You can run `atlas init-app --help` to see these flags and their descriptions on the command-line.
 
