@@ -14,6 +14,7 @@ import (
 	{{ if .WithPubsub }}"google.golang.org/grpc"{{ end }}
 
 	{{ if .WithGateway }}"github.com/infobloxopen/atlas-app-toolkit/gateway"{{ end }}
+	{{ if .WithGateway }}"github.com/infobloxopen/atlas-app-toolkit/requestid"{{ end }}
 	"github.com/infobloxopen/atlas-app-toolkit/server"
 	{{ if .WithPubsub }}pubsubgrpc "github.com/infobloxopen/atlas-pubsub/grpc"{{ end }}
 	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
@@ -110,6 +111,8 @@ func ServeExternal(logger *logrus.Logger) error {
 		server.WithGateway(
 			gateway.WithGatewayOptions(
 				runtime.WithForwardResponseOption(forwardResponseOption),
+				runtime.WithIncomingHeaderMatcher(whitelistStringsHeaderMatcher(
+					requestid.DefaultRequestIDKey)),
 			),
 			gateway.WithServerAddress(fmt.Sprintf("%s:%s", viper.GetString("server.address"), viper.GetString("server.port"))),
 			gateway.WithEndpointRegistration(viper.GetString("gateway.endpoint"), pb.Register{{ .Name | Service }}HandlerFromEndpoint),
@@ -162,6 +165,20 @@ func forwardResponseOption(ctx context.Context, w http.ResponseWriter, resp prot
 	return nil
 }
 {{- end }}
+
+{{ if .WithGateway -}}
+func whitelistStringsHeaderMatcher(headerNames ...string) func(string) (string, bool) {
+	headerNameMap := map[string]bool{}
+	for _, name := range headerNames {
+		headerNameMap[strings.ToLower(name)] = true
+	}
+	return func(headerName string) (string, bool) {
+		_, ok := headerNameMap[strings.ToLower(headerName)]
+		return headerName, ok
+	}
+}
+{{- end }}
+
 {{ if .WithHealth }}{{ if .WithDatabase }}
 func dbReady() error {
 	if viper.GetString("database.dsn") == "" {
