@@ -111,7 +111,7 @@ func ServeExternal(logger *logrus.Logger) error {
 		server.WithGateway(
 			gateway.WithGatewayOptions(
 				runtime.WithForwardResponseOption(forwardResponseOption),
-				runtime.WithIncomingHeaderMatcher(whitelistStringsHeaderMatcher(
+				runtime.WithIncomingHeaderMatcher(gateway.ExtendedDefaultHeaderMatcher(
 					requestid.DefaultRequestIDKey)),
 			),
 			gateway.WithServerAddress(fmt.Sprintf("%s:%s", viper.GetString("server.address"), viper.GetString("server.port"))),
@@ -165,20 +165,6 @@ func forwardResponseOption(ctx context.Context, w http.ResponseWriter, resp prot
 	return nil
 }
 {{- end }}
-
-{{ if .WithGateway -}}
-func whitelistStringsHeaderMatcher(headerNames ...string) func(string) (string, bool) {
-	headerNameMap := map[string]bool{}
-	for _, name := range headerNames {
-		headerNameMap[strings.ToLower(name)] = true
-	}
-	return func(headerName string) (string, bool) {
-		_, ok := headerNameMap[strings.ToLower(headerName)]
-		return headerName, ok
-	}
-}
-{{- end }}
-
 {{ if .WithHealth }}{{ if .WithDatabase }}
 func dbReady() error {
 	if viper.GetString("database.dsn") == "" {
