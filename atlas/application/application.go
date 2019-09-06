@@ -19,7 +19,7 @@ type Application struct {
 	WithDatabase bool
 	WithHealth   bool
 	WithPubsub   bool
-	ExpandName	 string
+	ExpandName   string
 }
 
 // Initialize generates brand-new application
@@ -67,6 +67,7 @@ func (app Application) initializeFiles() error {
 		Application.generateMakefileVars,
 		Application.generateMakefileCommon,
 		Application.generateMakefile,
+		Application.generateJenkinsfile,
 		Application.generateProto,
 		Application.generateServerMain,
 		Application.generateServerGrpc,
@@ -177,6 +178,10 @@ func (app Application) generateMakefileVars() error {
 
 func (app Application) generateMakefileCommon() error {
 	return app.generateFile("Makefile.common", "templates/Makefile.common.gotmpl")
+}
+
+func (app Application) generateJenkinsfile() error {
+	return app.generateFile("Jenkinsfile", "templates/Jenkinsfile.gotmpl")
 }
 
 func (app Application) generateProto() error {
