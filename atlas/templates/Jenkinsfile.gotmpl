@@ -38,9 +38,6 @@ pipeline {
         withDockerRegistry([credentialsId: "<insert-the-creds-id>", url: ""]) {
           sh "cd $DIRECTORY && make push IMAGE_VERSION=latest"
         }
-        withAWS(credentials:'<insert-the-creds-id>') {
-          sh "cd $DIRECTORY && make push-chart || true"
-        }
       }
     }
   }
