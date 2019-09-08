@@ -10,7 +10,7 @@ pipeline {
   }
   environment {
     GOPATH = "$WORKSPACE"
-    DIRECTORY = "src/{{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Name }}{{ end }}"
+    DIRECTORY = "src/github.com/{{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Name }}{{ end }}"
   }
   stages {
     stage("Lint") {
