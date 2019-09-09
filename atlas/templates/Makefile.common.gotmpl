@@ -102,7 +102,7 @@ vendor-update-atlas:
 .PHONY clean: clean-atlas
 clean-atlas:
 	@docker rmi -f $(shell docker images -q $(SERVER_IMAGE)) || true
-	rm .push* .docker*
+	rm .push-* .docker-*
 
 .PHONY migrate-up: migrate-up-atlas
 migrate-up-atlas:
