@@ -73,7 +73,7 @@ docker: .docker-$(IMAGE_NAME)-$(IMAGE_VERSION)
 
 push-atlas: docker
 ifndef IMAGE_REGISTRY
-	@echo "Please set IMAGE_REGISTRY variable in Makefile.vars to use push command"
+	@(echo "Please set IMAGE_REGISTRY variable in Makefile.vars to use push command"; exit 1)
 else
 	@docker push $(SERVER_IMAGE)
 endif
