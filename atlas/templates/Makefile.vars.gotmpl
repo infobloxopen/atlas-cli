@@ -3,9 +3,10 @@ BUILD_PATH              := bin
 DOCKERFILE_PATH         := $(CURDIR)/docker
 
 # configuration for image names
+BUILD_NUMBER            ?= 0
 USERNAME                := $(USER)
-GIT_COMMIT              := $(shell git describe --dirty=-unsupported --always --tags || echo pre-commit)
-IMAGE_VERSION           ?= $(GIT_COMMIT)-$(USERNAME)
+GIT_COMMIT              := $(shell git describe --dirty=-unsupported --always --tags --long || echo pre-commit)
+IMAGE_VERSION           ?= $(GIT_COMMIT)-j$(BUILD_NUMBER)
 {{ if .Registry }}IMAGE_REGISTRY ?= {{ .Registry}}
 {{ end}}
 IMAGE_NAME              ?= {{ .Name }}-server
