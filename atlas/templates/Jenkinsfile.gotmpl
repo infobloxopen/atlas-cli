@@ -6,11 +6,11 @@ pipeline {
     go "Go 1.11"
   }
   options {
-    checkoutToSubdirectory('src/github.com/{{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Name }}{{ end }}')
+    checkoutToSubdirectory('src/github.com/{{ if .Root }}{{ .Root }}/{{ end }}{{ .Name }}"')
   }
   environment {
     GOPATH = "$WORKSPACE"
-    DIRECTORY = "src/github.com/{{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Name }}{{ end }}"
+    DIRECTORY = "src/github.com/{{ if .Root }}{{ .Root }}/{{ end }}{{ .Name }}"
   }
   stages {
     stage("Lint") {
@@ -48,4 +48,3 @@ pipeline {
           }
   }
 }
-
