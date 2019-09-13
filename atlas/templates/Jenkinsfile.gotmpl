@@ -6,7 +6,7 @@ pipeline {
     go "Go 1.11"
   }
   options {
-    checkoutToSubdirectory('src/github.com/{{ if .Root }}{{ .Root }}/{{ end }}{{ .Name }}"')
+    checkoutToSubdirectory('src/github.com/{{ if .Root }}{{ .Root }}/{{ end }}{{ .Name }}')
   }
   environment {
     GOPATH = "$WORKSPACE"

@@ -1,5 +1,5 @@
 # build the server binary
-FROM golang:1.10.0 AS builder
+FROM golang:1.11.13 AS builder
 LABEL stage=server-intermediate
 WORKDIR /go/src/{{ .Root }}/{{ .Name }}
 COPY . .
@@ -9,6 +9,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o bin/server ./cmd/server
 FROM alpine:latest AS runner
 WORKDIR /bin
 COPY --from=builder /go/src/{{ .Root }}/{{ .Name }}/bin/server .
-{{ if .WithGateway }}COPY pkg/pb/*.swagger.json tmp/www/swagger{{ end }}
+{{ if .WithGateway }}COPY pkg/pb/*.swagger.json www/swagger.json{{ end }}
 {{ if .WithDatabase }}COPY --from=builder /go/src/{{ .Root }}/{{ .Name }}/db/migrations /db/migrations/{{end}}
-ENTRYPOINT ["server"{{ if .WithGateway}}, "--gateway.swaggerFile", "www/{{ .Name }}.swagger.json"{{ end }}]
+ENTRYPOINT ["server"{{ if .WithGateway}}, "--gateway.swaggerFile", "www/swagger.json"{{ end }}]
