@@ -5,13 +5,14 @@ DOCKERFILE_PATH         := $(CURDIR)/docker
 # configuration for image names
 USERNAME                := $(USER)
 GIT_COMMIT              := $(shell git describe --dirty=-unsupported --always --tags || echo pre-commit)
-IMAGE_VERSION           ?= $(GIT_COMMIT)-$(USERNAME)
+IMAGE_VERSION           ?= $(GIT_COMMIT)
 {{ if .Registry }}IMAGE_REGISTRY ?= {{ .Registry}}
 {{ end}}
+IMAGE_NAME              ?= {{ .Name }}
 # configuration for server binary and image
 SERVER_BINARY           := $(BUILD_PATH)/server
 SERVER_PATH             := $(PROJECT_ROOT)/cmd/server
-SERVER_IMAGE            := {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}-server
+SERVER_IMAGE            := {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}$(IMAGE_NAME)
 SERVER_DOCKERFILE       := $(DOCKERFILE_PATH)/Dockerfile
 
 # configuration for the protobuf gentool
