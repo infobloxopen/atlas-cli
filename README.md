@@ -32,7 +32,7 @@ Bootstrapped applications use [golang-migrate](https://github.com/golang-migrate
 
 ```
 $ go get -u -d github.com/golang-migrate/migrate/cli github.com/lib/pq
-$ go build -tags 'postgres' -o /usr/local/bin/migrate github.com/golang-migrate/migrate/cli
+$ go build -tags 'postgres' -o /usr/local/bin/migrate github.com/golang-migrate/migrate/v4/cli
 ```
 See the official golang-migrate [GitHub repository](https://github.com/golang-migrate/migrate) for more information about this tool.
 
