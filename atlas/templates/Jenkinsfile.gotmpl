@@ -3,7 +3,7 @@ pipeline {
     label 'ubuntu_docker_label'
   }
   tools {
-    go "Go 1.11"
+    go "Go 1.13"
   }
   options {
     checkoutToSubdirectory('src/github.com/{{ if .Root }}{{ .Root }}/{{ end }}{{ .Name }}')
