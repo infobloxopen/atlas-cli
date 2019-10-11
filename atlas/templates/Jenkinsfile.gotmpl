@@ -3,7 +3,7 @@ pipeline {
     label 'ubuntu_docker_label'
   }
   tools {
-    go "Go 1.11"
+    go "Go 1.13"
   }
   options {
     checkoutToSubdirectory('src/github.com/{{ if .Root }}{{ .Root }}/{{ end }}{{ .Name }}')
@@ -15,18 +15,24 @@ pipeline {
   stages {
     stage("Lint") {
       steps {
-        sh "cd $DIRECTORY && make fmt && git diff --exit-code > /dev/null"
+        dir("$DIRECTORY") {
+          sh "make fmt && git diff --exit-code"
+        }
       }
     }
     stage("Test") {
       steps {
-        sh "cd $DIRECTORY && make test"
+        dir("$DIRECTORY") {
+          sh "make test"
+        }
       }
     }
     stage("Build") {
       steps {
         withDockerRegistry([credentialsId: "<insert-the-creds-id>", url: ""]) {
-          sh "cd $DIRECTORY && make docker push"
+          dir("$DIRECTORY") {
+            sh "make docker push"
+          }
         }
       }
     }
@@ -36,15 +42,19 @@ pipeline {
       }
       steps {
         withDockerRegistry([credentialsId: "<insert-the-creds-id>", url: ""]) {
-          sh "cd $DIRECTORY && make push IMAGE_VERSION=latest"
+          dir("$DIRECTORY") {
+            sh "make push IMAGE_VERSION=latest"
+          }
         }
       }
     }
   }
   post {
-      always {
-          sh "cd $DIRECTORY && make clean || true"
-          cleanWs()
-          }
+    always {
+      dir("$DIRECTORY") {
+        sh "make clean || true"
+      }
+      cleanWs()
+    }
   }
 }
