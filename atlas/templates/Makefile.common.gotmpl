@@ -91,7 +91,7 @@ protobuf-atlas:
 
 .PHONY vendor: vendor-atlas
 vendor-atlas:
-	@dep ensure -vendor-only
+	@go mod venodr
 
 .PHONY vendor-update: vendor-update-atlas
 vendor-update-atlas:
