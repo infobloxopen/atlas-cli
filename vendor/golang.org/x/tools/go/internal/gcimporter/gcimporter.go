@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This file is a modified copy of $GOROOT/src/go/internal/gcimporter/gcimporter.go,
+// This file is a copy of $GOROOT/src/go/internal/gcimporter/gcimporter.go,
 // but it also contains the original source-based importer code for Go1.6.
 // Once we stop supporting 1.6, we can remove that code.
 
@@ -16,7 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"go/build"
-	"go/constant"
+	exact "go/constant"
 	"go/token"
 	"go/types"
 	"io"
@@ -55,7 +55,6 @@ func FindPkg(path, srcDir string) (filename, id string) {
 		}
 		bp, _ := build.Import(path, srcDir, build.FindOnly|build.AllowBinary)
 		if bp.PkgObj == "" {
-			id = path // make sure we have an id to print in error message
 			return
 		}
 		noext = strings.TrimSuffix(bp.PkgObj, ".a")
@@ -128,91 +127,51 @@ func ImportData(packages map[string]*types.Package, filename, id string, data io
 // the corresponding package object to the packages map, and returns the object.
 // The packages map must contain all packages already imported.
 //
-func Import(packages map[string]*types.Package, path, srcDir string, lookup func(path string) (io.ReadCloser, error)) (pkg *types.Package, err error) {
-	var rc io.ReadCloser
-	var filename, id string
-	if lookup != nil {
-		// With custom lookup specified, assume that caller has
-		// converted path to a canonical import path for use in the map.
+func Import(packages map[string]*types.Package, path, srcDir string) (pkg *types.Package, err error) {
+	filename, id := FindPkg(path, srcDir)
+	if filename == "" {
 		if path == "unsafe" {
 			return types.Unsafe, nil
 		}
-		id = path
-
-		// No need to re-import if the package was imported completely before.
-		if pkg = packages[id]; pkg != nil && pkg.Complete() {
-			return
-		}
-		f, err := lookup(path)
-		if err != nil {
-			return nil, err
-		}
-		rc = f
-	} else {
-		filename, id = FindPkg(path, srcDir)
-		if filename == "" {
-			if path == "unsafe" {
-				return types.Unsafe, nil
-			}
-			return nil, fmt.Errorf("can't find import: %q", id)
-		}
-
-		// no need to re-import if the package was imported completely before
-		if pkg = packages[id]; pkg != nil && pkg.Complete() {
-			return
-		}
-
-		// open file
-		f, err := os.Open(filename)
-		if err != nil {
-			return nil, err
-		}
-		defer func() {
-			if err != nil {
-				// add file name to error
-				err = fmt.Errorf("%s: %v", filename, err)
-			}
-		}()
-		rc = f
+		err = fmt.Errorf("can't find import: %s", id)
+		return
 	}
-	defer rc.Close()
+
+	// no need to re-import if the package was imported completely before
+	if pkg = packages[id]; pkg != nil && pkg.Complete() {
+		return
+	}
+
+	// open file
+	f, err := os.Open(filename)
+	if err != nil {
+		return
+	}
+	defer func() {
+		f.Close()
+		if err != nil {
+			// add file name to error
+			err = fmt.Errorf("reading export data: %s: %v", filename, err)
+		}
+	}()
 
 	var hdr string
-	buf := bufio.NewReader(rc)
+	buf := bufio.NewReader(f)
 	if hdr, err = FindExportData(buf); err != nil {
 		return
 	}
 
 	switch hdr {
 	case "$$\n":
-		// Work-around if we don't have a filename; happens only if lookup != nil.
-		// Either way, the filename is only needed for importer error messages, so
-		// this is fine.
-		if filename == "" {
-			filename = path
-		}
 		return ImportData(packages, filename, id, buf)
-
 	case "$$B\n":
 		var data []byte
 		data, err = ioutil.ReadAll(buf)
-		if err != nil {
-			break
-		}
-
-		// TODO(gri): allow clients of go/importer to provide a FileSet.
-		// Or, define a new standard go/types/gcexportdata package.
-		fset := token.NewFileSet()
-
-		// The indexed export format starts with an 'i'; the older
-		// binary export format starts with a 'c', 'd', or 'v'
-		// (from "version"). Select appropriate importer.
-		if len(data) > 0 && data[0] == 'i' {
-			_, pkg, err = IImportData(fset, packages, data[1:], id)
-		} else {
+		if err == nil {
+			fset := token.NewFileSet()
 			_, pkg, err = BImportData(fset, packages, data, id)
+			return
 		}
-
 	default:
 		err = fmt.Errorf("unknown export data header: %q", hdr)
 	}
@@ -804,9 +763,9 @@ func (p *parser) parseInt() string {
 
 // number = int_lit [ "p" int_lit ] .
 //
-func (p *parser) parseNumber() (typ *types.Basic, val constant.Value) {
+func (p *parser) parseNumber() (typ *types.Basic, val exact.Value) {
 	// mantissa
-	mant := constant.MakeFromLiteral(p.parseInt(), token.INT, 0)
+	mant := exact.MakeFromLiteral(p.parseInt(), token.INT, 0)
 	if mant == nil {
 		panic("invalid mantissa")
 	}
@@ -819,14 +778,14 @@ func (p *parser) parseNumber() (typ *types.Basic, val constant.Value) {
 			p.error(err)
 		}
 		if exp < 0 {
-			denom := constant.MakeInt64(1)
-			denom = constant.Shift(denom, token.SHL, uint(-exp))
+			denom := exact.MakeInt64(1)
+			denom = exact.Shift(denom, token.SHL, uint(-exp))
 			typ = types.Typ[types.UntypedFloat]
-			val = constant.BinaryOp(mant, token.QUO, denom)
+			val = exact.BinaryOp(mant, token.QUO, denom)
 			return
 		}
 		if exp > 0 {
-			mant = constant.Shift(mant, token.SHL, uint(exp))
+			mant = exact.Shift(mant, token.SHL, uint(exp))
 		}
 		typ = types.Typ[types.UntypedFloat]
 		val = mant
@@ -857,7 +816,7 @@ func (p *parser) parseConstDecl() {
 
 	p.expect('=')
 	var typ types.Type
-	var val constant.Value
+	var val exact.Value
 	switch p.tok {
 	case scanner.Ident:
 		// bool_lit
@@ -865,7 +824,7 @@ func (p *parser) parseConstDecl() {
 			p.error("expected true or false")
 		}
 		typ = types.Typ[types.UntypedBool]
-		val = constant.MakeBool(p.lit == "true")
+		val = exact.MakeBool(p.lit == "true")
 		p.next()
 
 	case '-', scanner.Int:
@@ -889,18 +848,18 @@ func (p *parser) parseConstDecl() {
 		p.expectKeyword("i")
 		p.expect(')')
 		typ = types.Typ[types.UntypedComplex]
-		val = constant.BinaryOp(re, token.ADD, constant.MakeImag(im))
+		val = exact.BinaryOp(re, token.ADD, exact.MakeImag(im))
 
 	case scanner.Char:
 		// rune_lit
 		typ = types.Typ[types.UntypedRune]
-		val = constant.MakeFromLiteral(p.lit, token.CHAR, 0)
+		val = exact.MakeFromLiteral(p.lit, token.CHAR, 0)
 		p.next()
 
 	case scanner.String:
 		// string_lit
 		typ = types.Typ[types.UntypedString]
-		val = constant.MakeFromLiteral(p.lit, token.STRING, 0)
+		val = exact.MakeFromLiteral(p.lit, token.STRING, 0)
 		p.next()
 
 	default:

@@ -24,7 +24,6 @@ import (
 
 	"golang.org/x/tools/go/buildutil"
 	"golang.org/x/tools/go/loader"
-	"golang.org/x/tools/internal/testenv"
 )
 
 func TestStdlib(t *testing.T) {
@@ -32,9 +31,8 @@ func TestStdlib(t *testing.T) {
 		t.Skipf("incomplete std lib on %s", runtime.GOOS)
 	}
 	if testing.Short() {
-		t.Skip("skipping in short mode; uses tons of memory (https://golang.org/issue/14113)")
+		t.Skip("skipping in short mode; uses tons of memory (golang.org/issue/14113)")
 	}
-	testenv.NeedsTool(t, "go")
 
 	runtime.GC()
 	t0 := time.Now()
@@ -122,7 +120,7 @@ func TestStdlib(t *testing.T) {
 
 func TestCgoOption(t *testing.T) {
 	if testing.Short() {
-		t.Skip("skipping in short mode; uses tons of memory (https://golang.org/issue/14113)")
+		t.Skip("skipping in short mode; uses tons of memory (golang.org/issue/14113)")
 	}
 	switch runtime.GOOS {
 	// On these systems, the net and os/user packages don't use cgo
@@ -136,8 +134,6 @@ func TestCgoOption(t *testing.T) {
 	if !build.Default.CgoEnabled {
 		return
 	}
-	testenv.NeedsTool(t, "go")
-
 	// Test that we can load cgo-using packages with
 	// CGO_ENABLED=[01], which causes go/build to select pure
 	// Go/native implementations, respectively, based on build

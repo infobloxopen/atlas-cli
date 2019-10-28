@@ -13,10 +13,8 @@ import (
 	"go/build"
 	"go/constant"
 	"go/types"
-	"os"
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -24,13 +22,7 @@ import (
 
 	"golang.org/x/tools/go/buildutil"
 	"golang.org/x/tools/go/loader"
-	"golang.org/x/tools/internal/testenv"
 )
-
-func TestMain(m *testing.M) {
-	testenv.ExitIfSmallMachine()
-	os.Exit(m.Run())
-}
 
 // TestFromArgs checks that conf.FromArgs populates conf correctly.
 // It does no I/O.
@@ -135,10 +127,6 @@ func TestLoad_MissingInitialPackage(t *testing.T) {
 }
 
 func TestLoad_MissingInitialPackage_AllowErrors(t *testing.T) {
-	if runtime.Compiler == "gccgo" {
-		t.Skip("gccgo has no standard library test files")
-	}
-
 	var conf loader.Config
 	conf.AllowErrors = true
 	conf.Import("nosuchpkg")
@@ -262,17 +250,7 @@ func TestLoad_FromSource_Success(t *testing.T) {
 	}
 }
 
-var race = false
-
 func TestLoad_FromImports_Success(t *testing.T) {
-	if v := runtime.Version(); strings.Contains(v, "devel") && race {
-		t.Skip("golang.org/issue/31749: This test is broken on tip in race mode. Skip until it's fixed.")
-	}
-
-	if runtime.Compiler == "gccgo" {
-		t.Skip("gccgo has no standard library test files")
-	}
-
 	var conf loader.Config
 	conf.ImportWithTests("fmt")
 	conf.ImportWithTests("errors")

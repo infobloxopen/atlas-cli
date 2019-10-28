@@ -35,7 +35,6 @@ import (
 	"go/token"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -48,20 +47,7 @@ import (
 	"testing"
 
 	guru "golang.org/x/tools/cmd/guru"
-	"golang.org/x/tools/internal/testenv"
 )
-
-func init() {
-	// This test currently requires GOPATH mode.
-	// Explicitly disabling module mode should suffix, but
-	// we'll also turn off GOPROXY just for good measure.
-	if err := os.Setenv("GO111MODULE", "off"); err != nil {
-		log.Fatal(err)
-	}
-	if err := os.Setenv("GOPROXY", "off"); err != nil {
-		log.Fatal(err)
-	}
-}
 
 var updateFlag = flag.Bool("update", false, "Update the golden files.")
 
@@ -237,9 +223,10 @@ func TestGuru(t *testing.T) {
 	}
 
 	for _, filename := range []string{
-		"testdata/src/alias/alias.go",
+		"testdata/src/alias/alias.go", // iff guru.HasAlias (go1.9)
 		"testdata/src/calls/main.go",
 		"testdata/src/describe/main.go",
+		"testdata/src/describe/main19.go", // iff go1.9
 		"testdata/src/freevars/main.go",
 		"testdata/src/implements/main.go",
 		"testdata/src/implements-methods/main.go",
@@ -256,6 +243,7 @@ func TestGuru(t *testing.T) {
 		"testdata/src/calls-json/main.go",
 		"testdata/src/peers-json/main.go",
 		"testdata/src/definition-json/main.go",
+		"testdata/src/definition-json/main19.go",
 		"testdata/src/describe-json/main.go",
 		"testdata/src/implements-json/main.go",
 		"testdata/src/implements-methods-json/main.go",
@@ -272,18 +260,30 @@ func TestGuru(t *testing.T) {
 				// wording for a "no such file or directory" error.
 				t.Skip()
 			}
+			if filename == "testdata/src/alias/alias.go" && !guru.HasAlias {
+				t.Skip()
+			}
+			if strings.HasSuffix(filename, "19.go") && !contains(build.Default.ReleaseTags, "go1.9") {
+				// TODO(adonovan): recombine the 'describe' and 'definition'
+				// tests once we drop support for go1.8.
+				t.Skip()
+			}
+			if filename == "testdata/src/referrers/main.go" && !contains(build.Default.ReleaseTags, "go1.11") {
+				// Disabling broken test on Go 1.9 and Go 1.10. https://golang.org/issue/24421
+				// TODO(gri,adonovan): fix this test.
+				t.Skip()
+			}
+
 			json := strings.Contains(filename, "-json/")
 			queries := parseQueries(t, filename)
 			golden := filename + "lden"
-			gotfh, err := ioutil.TempFile("", filepath.Base(filename)+"t")
+			got := filename + "t"
+			gotfh, err := os.Create(got)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("Create(%s) failed: %s", got, err)
 			}
-			got := gotfh.Name()
-			defer func() {
-				gotfh.Close()
-				os.Remove(got)
-			}()
+			defer os.Remove(got)
+			defer gotfh.Close()
 
 			// Run the guru on each query, redirecting its output
 			// and error (if any) to the foo.got file.
@@ -299,7 +299,6 @@ func TestGuru(t *testing.T) {
 			default:
 				cmd = exec.Command("/usr/bin/diff", "-u", golden, got)
 			}
-			testenv.NeedsTool(t, cmd.Path)
 			buf := new(bytes.Buffer)
 			cmd.Stdout = buf
 			cmd.Stderr = os.Stderr
@@ -316,6 +315,15 @@ func TestGuru(t *testing.T) {
 			}
 		})
 	}
+}
+
+func contains(haystack []string, needle string) bool {
+	for _, x := range haystack {
+		if needle == x {
+			return true
+		}
+	}
+	return false
 }
 
 func TestIssue14684(t *testing.T) {

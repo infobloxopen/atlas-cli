@@ -122,6 +122,9 @@ func runCommand(command string, args ...string) error {
 		cmd.Stdout = os.Stderr
 	}
 	if err := cmd.Run(); err != nil {
+		fmt.Println("!!!")
+		fmt.Println( cmd.Output())
+		fmt.Println("!!!")
 		return err
 	}
 	return nil
@@ -141,12 +144,15 @@ func generateProtobuf() error {
 func initGoMod() error {
 	fmt.Print("Starting dep project... ")
 	if err := runCommand("go", "mod", "init"); err != nil {
+		fmt.Println(err)
 		return err
 	}
 	if err := runCommand("go", "mod", "vendor"); err != nil {
+		fmt.Println(err)
 		return err
 	}
 	if err := runCommand("go", "mod", "download"); err != nil {
+		fmt.Println(err)
 		return err
 	}
 	fmt.Println("done!")

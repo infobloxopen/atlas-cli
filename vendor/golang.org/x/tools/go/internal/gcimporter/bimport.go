@@ -52,24 +52,24 @@ type importer struct {
 // compromised, an error is returned.
 func BImportData(fset *token.FileSet, imports map[string]*types.Package, data []byte, path string) (_ int, pkg *types.Package, err error) {
 	// catch panics and return them as errors
-	const currentVersion = 6
-	version := -1 // unknown version
 	defer func() {
 		if e := recover(); e != nil {
+			// The package (filename) causing the problem is added to this
+			// error by a wrapper in the caller (Import in gcimporter.go).
 			// Return a (possibly nil or incomplete) package unchanged (see #16088).
-			if version > currentVersion {
-				err = fmt.Errorf("cannot import %q (%v), export data is newer version - update tool", path, e)
-			} else {
-				err = fmt.Errorf("cannot import %q (%v), possibly version skew - reinstall package", path, e)
-			}
+			err = fmt.Errorf("cannot import, possibly version skew (%v) - reinstall package", e)
 		}
 	}()
+
+	if len(data) > 0 && data[0] == 'i' {
+		return iImportData(fset, imports, data[1:], path)
+	}
 
 	p := importer{
 		imports:    imports,
 		data:       data,
 		importpath: path,
-		version:    version,
+		version:    -1,           // unknown version
 		strList:    []string{""}, // empty string is mapped to 0
 		pathList:   []string{""}, // empty string is mapped to 0
 		fake: fakeFileSet{
@@ -94,7 +94,7 @@ func BImportData(fset *token.FileSet, imports map[string]*types.Package, data []
 		p.posInfoFormat = p.int() != 0
 		versionstr = p.string()
 		if versionstr == "v1" {
-			version = 0
+			p.version = 0
 		}
 	} else {
 		// Go1.8 extensible encoding
@@ -102,31 +102,30 @@ func BImportData(fset *token.FileSet, imports map[string]*types.Package, data []
 		versionstr = p.rawStringln(b)
 		if s := strings.SplitN(versionstr, " ", 3); len(s) >= 2 && s[0] == "version" {
 			if v, err := strconv.Atoi(s[1]); err == nil && v > 0 {
-				version = v
+				p.version = v
 			}
 		}
 	}
-	p.version = version
 
 	// read version specific flags - extend as necessary
 	switch p.version {
-	// case currentVersion:
+	// case 7:
 	// 	...
 	//	fallthrough
-	case currentVersion, 5, 4, 3, 2, 1:
+	case 6, 5, 4, 3, 2, 1:
 		p.debugFormat = p.rawStringln(p.rawByte()) == "debug"
 		p.trackAllTypes = p.int() != 0
 		p.posInfoFormat = p.int() != 0
 	case 0:
 		// Go1.7 encoding format - nothing to do here
 	default:
-		errorf("unknown bexport format version %d (%q)", p.version, versionstr)
+		errorf("unknown export format version %d (%q)", p.version, versionstr)
 	}
 
 	// --- generic export data ---
 
 	// populate typList with predeclared "known" types
-	p.typList = append(p.typList, predeclared()...)
+	p.typList = append(p.typList, predeclared...)
 
 	// read package data
 	pkg = p.pkg()
@@ -332,7 +331,7 @@ func (p *importer) pos() token.Pos {
 	p.prevFile = file
 	p.prevLine = line
 
-	return p.fake.pos(file, line, 0)
+	return p.fake.pos(file, line)
 }
 
 // Synthesize a token.Pos
@@ -341,9 +340,7 @@ type fakeFileSet struct {
 	files map[string]*token.File
 }
 
-func (s *fakeFileSet) pos(file string, line, column int) token.Pos {
-	// TODO(mdempsky): Make use of column.
-
+func (s *fakeFileSet) pos(file string, line int) token.Pos {
 	// Since we don't know the set of needed file positions, we
 	// reserve maxlines positions per file.
 	const maxlines = 64 * 1024
@@ -534,13 +531,13 @@ func (p *importer) typ(parent *types.Package, tname *types.Named) types.Type {
 			p.record(nil)
 		}
 
-		var embeddeds []types.Type
+		var embeddeds []*types.Named
 		for n := p.int(); n > 0; n-- {
 			p.pos()
-			embeddeds = append(embeddeds, p.typ(parent, nil))
+			embeddeds = append(embeddeds, p.typ(parent, nil).(*types.Named))
 		}
 
-		t := newInterface(p.methodList(parent, tname), embeddeds)
+		t := types.NewInterface(p.methodList(parent, tname), embeddeds)
 		p.interfaceList = append(p.interfaceList, t)
 		if p.trackAllTypes {
 			p.typList[n] = t
@@ -978,59 +975,50 @@ const (
 	aliasTag
 )
 
-var predeclOnce sync.Once
-var predecl []types.Type // initialized lazily
+var predeclared = []types.Type{
+	// basic types
+	types.Typ[types.Bool],
+	types.Typ[types.Int],
+	types.Typ[types.Int8],
+	types.Typ[types.Int16],
+	types.Typ[types.Int32],
+	types.Typ[types.Int64],
+	types.Typ[types.Uint],
+	types.Typ[types.Uint8],
+	types.Typ[types.Uint16],
+	types.Typ[types.Uint32],
+	types.Typ[types.Uint64],
+	types.Typ[types.Uintptr],
+	types.Typ[types.Float32],
+	types.Typ[types.Float64],
+	types.Typ[types.Complex64],
+	types.Typ[types.Complex128],
+	types.Typ[types.String],
 
-func predeclared() []types.Type {
-	predeclOnce.Do(func() {
-		// initialize lazily to be sure that all
-		// elements have been initialized before
-		predecl = []types.Type{ // basic types
-			types.Typ[types.Bool],
-			types.Typ[types.Int],
-			types.Typ[types.Int8],
-			types.Typ[types.Int16],
-			types.Typ[types.Int32],
-			types.Typ[types.Int64],
-			types.Typ[types.Uint],
-			types.Typ[types.Uint8],
-			types.Typ[types.Uint16],
-			types.Typ[types.Uint32],
-			types.Typ[types.Uint64],
-			types.Typ[types.Uintptr],
-			types.Typ[types.Float32],
-			types.Typ[types.Float64],
-			types.Typ[types.Complex64],
-			types.Typ[types.Complex128],
-			types.Typ[types.String],
+	// basic type aliases
+	types.Universe.Lookup("byte").Type(),
+	types.Universe.Lookup("rune").Type(),
 
-			// basic type aliases
-			types.Universe.Lookup("byte").Type(),
-			types.Universe.Lookup("rune").Type(),
+	// error
+	types.Universe.Lookup("error").Type(),
 
-			// error
-			types.Universe.Lookup("error").Type(),
+	// untyped types
+	types.Typ[types.UntypedBool],
+	types.Typ[types.UntypedInt],
+	types.Typ[types.UntypedRune],
+	types.Typ[types.UntypedFloat],
+	types.Typ[types.UntypedComplex],
+	types.Typ[types.UntypedString],
+	types.Typ[types.UntypedNil],
 
-			// untyped types
-			types.Typ[types.UntypedBool],
-			types.Typ[types.UntypedInt],
-			types.Typ[types.UntypedRune],
-			types.Typ[types.UntypedFloat],
-			types.Typ[types.UntypedComplex],
-			types.Typ[types.UntypedString],
-			types.Typ[types.UntypedNil],
+	// package unsafe
+	types.Typ[types.UnsafePointer],
 
-			// package unsafe
-			types.Typ[types.UnsafePointer],
+	// invalid type
+	types.Typ[types.Invalid], // only appears in packages with errors
 
-			// invalid type
-			types.Typ[types.Invalid], // only appears in packages with errors
-
-			// used internally by gc; never used by this package or in .a files
-			anyType{},
-		}
-	})
-	return predecl
+	// used internally by gc; never used by this package or in .a files
+	anyType{},
 }
 
 type anyType struct{}

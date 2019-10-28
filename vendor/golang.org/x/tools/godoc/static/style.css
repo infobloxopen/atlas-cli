@@ -6,11 +6,6 @@ body {
 	text-align: center;
 	color: #222;
 }
-textarea {
-	/* Inherit text color from body avoiding illegible text in the case where the
- 	* user has inverted the browsers custom text and background colors. */
-	color: inherit;
-}
 pre,
 code {
 	font-family: Menlo, monospace;
@@ -42,37 +37,15 @@ pre .ln {
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
-
-	/* Ensure 8 characters in the document - which due to floating
-   * point rendering issues, might have a width of less than 1 each - are 8
-   * characters wide, so a tab in the 9th position indents properly. See
-   * https://github.com/webcompat/web-bugs/issues/17530#issuecomment-402675091
-   * for more information. */
-	display: inline-block;
-	width: 8ch;
-}
-
-.search-nav{
-	margin-left: 1.25rem;
-	font-size: 0.875rem;
-	column-gap: 1.25rem;
-	column-fill: auto;
-	column-width: 14rem;
-}
-
-.search-nav .indent {
-	margin-left: 1.25rem;
 }
 
 a,
-.exampleHeading .text,
-.expandAll {
+.exampleHeading .text {
 	color: #375EAB;
 	text-decoration: none;
 }
 a:hover,
-.exampleHeading .text:hover,
-.expandAll:hover {
+.exampleHeading .text:hover {
 	text-decoration: underline;
 }
 .article a {
@@ -128,17 +101,12 @@ h2 {
 	padding: 0.5rem;
 	line-height: 1.25;
 	font-weight: normal;
-	overflow: auto;
-	overflow-wrap: break-word;
 }
 h2 a {
 	font-weight: bold;
 }
 h3 {
 	font-size: 1.25rem;
-	line-height: 1.25;
-	overflow: auto;
-	overflow-wrap: break-word;
 }
 h3,
 h4 {
@@ -150,14 +118,6 @@ h4 {
 .rootHeading {
 	font-size: 1.25rem;
 	margin: 0;
-}
-
-h2 > span,
-h3 > span {
-	float: right;
-	margin: 0 25px 0 0;
-	font-weight: normal;
-	color: #5279C7;
 }
 
 dl {
@@ -200,20 +160,6 @@ div#nav table td {
 .top-heading a {
 	color: #222;
 	text-decoration: none;
-}
-
-#pkg-examples h3 {
-	float: left;
-}
-
-#pkg-examples dl {
-	clear: both;
-}
-
-.expandAll {
-	cursor: pointer;
-	float: left;
-	margin: 1.25rem 0;
 }
 
 div#topbar {
@@ -334,9 +280,6 @@ input#search {
 	flex-grow: 1;
 	max-width: 100%;
 	min-width: 5.625rem;
-}
-input#search:-webkit-search-decoration {
-	-webkit-appearance: none;
 }
 input#search:-moz-ui-invalid {
 	box-shadow: unset;
@@ -644,6 +587,7 @@ div.play .buttons a {
 }
 
 /* drop-down playground */
+#playgroundButton,
 div#playground {
 	/* start hidden; revealed by javascript */
 	display: none;
@@ -778,11 +722,6 @@ a.error {
 @media (max-width: 43.75em) {
 	body {
 		font-size: 0.9375rem;
-	}
-
-	div#playground {
-		left: 0;
-		right: 0;
 	}
 
 	pre,

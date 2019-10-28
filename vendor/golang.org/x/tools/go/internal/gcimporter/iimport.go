@@ -12,7 +12,6 @@ package gcimporter
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"go/constant"
 	"go/token"
 	"go/types"
@@ -58,30 +57,18 @@ const (
 	interfaceType
 )
 
-// IImportData imports a package from the serialized package data
+// iImportData imports a package from the serialized package data
 // and returns the number of bytes consumed and a reference to the package.
 // If the export data version is not recognized or the format is otherwise
 // compromised, an error is returned.
-func IImportData(fset *token.FileSet, imports map[string]*types.Package, data []byte, path string) (_ int, pkg *types.Package, err error) {
-	const currentVersion = 1
-	version := int64(-1)
-	defer func() {
-		if e := recover(); e != nil {
-			if version > currentVersion {
-				err = fmt.Errorf("cannot import %q (%v), export data is newer version - update tool", path, e)
-			} else {
-				err = fmt.Errorf("cannot import %q (%v), possibly version skew - reinstall package", path, e)
-			}
-		}
-	}()
-
+func iImportData(fset *token.FileSet, imports map[string]*types.Package, data []byte, path string) (_ int, pkg *types.Package, err error) {
 	r := &intReader{bytes.NewReader(data), path}
 
-	version = int64(r.uint64())
+	version := r.uint64()
 	switch version {
-	case currentVersion, 0:
+	case 0:
 	default:
-		errorf("unknown iexport format version %d", version)
+		errorf("cannot import %q: unknown iexport format version %d", path, version)
 	}
 
 	sLen := int64(r.uint64())
@@ -93,8 +80,7 @@ func IImportData(fset *token.FileSet, imports map[string]*types.Package, data []
 	r.Seek(sLen+dLen, io.SeekCurrent)
 
 	p := iimporter{
-		ipath:   path,
-		version: int(version),
+		ipath: path,
 
 		stringData:  stringData,
 		stringCache: make(map[uint64]string),
@@ -110,7 +96,7 @@ func IImportData(fset *token.FileSet, imports map[string]*types.Package, data []
 		},
 	}
 
-	for i, pt := range predeclared() {
+	for i, pt := range predeclared {
 		p.typCache[uint64(i)] = pt
 	}
 
@@ -143,18 +129,16 @@ func IImportData(fset *token.FileSet, imports map[string]*types.Package, data []
 		p.pkgIndex[pkg] = nameIndex
 		pkgList[i] = pkg
 	}
-	if len(pkgList) == 0 {
-		errorf("no packages found for %s", path)
-		panic("unreachable")
-	}
-	p.ipkg = pkgList[0]
-	names := make([]string, 0, len(p.pkgIndex[p.ipkg]))
-	for name := range p.pkgIndex[p.ipkg] {
+
+	localpkg := pkgList[0]
+
+	names := make([]string, 0, len(p.pkgIndex[localpkg]))
+	for name := range p.pkgIndex[localpkg] {
 		names = append(names, name)
 	}
 	sort.Strings(names)
 	for _, name := range names {
-		p.doDecl(p.ipkg, name)
+		p.doDecl(localpkg, name)
 	}
 
 	for _, typ := range p.interfaceList {
@@ -164,19 +148,17 @@ func IImportData(fset *token.FileSet, imports map[string]*types.Package, data []
 	// record all referenced packages as imports
 	list := append(([]*types.Package)(nil), pkgList[1:]...)
 	sort.Sort(byPath(list))
-	p.ipkg.SetImports(list)
+	localpkg.SetImports(list)
 
 	// package was imported completely and without errors
-	p.ipkg.MarkComplete()
+	localpkg.MarkComplete()
 
 	consumed, _ := r.Seek(0, io.SeekCurrent)
-	return int(consumed), p.ipkg, nil
+	return int(consumed), localpkg, nil
 }
 
 type iimporter struct {
-	ipath   string
-	ipkg    *types.Package
-	version int
+	ipath string
 
 	stringData  []byte
 	stringCache map[uint64]string
@@ -227,9 +209,6 @@ func (p *iimporter) pkgAt(off uint64) *types.Package {
 		return pkg
 	}
 	path := p.stringAt(off)
-	if path == p.ipath {
-		return p.ipkg
-	}
 	errorf("missing package %q in %q", path, p.ipath)
 	return nil
 }
@@ -259,7 +238,6 @@ type importReader struct {
 	currPkg    *types.Package
 	prevFile   string
 	prevLine   int64
-	prevColumn int64
 }
 
 func (r *importReader) obj(name string) {
@@ -339,10 +317,6 @@ func (r *importReader) value() (typ types.Type, val constant.Value) {
 		val = constant.BinaryOp(re, token.ADD, constant.MakeImag(im))
 
 	default:
-		if b.Kind() == types.Invalid {
-			val = constant.MakeUnknown()
-			return
-		}
 		errorf("unexpected type %v", typ) // panics
 		panic("unreachable")
 	}
@@ -453,19 +427,6 @@ func (r *importReader) qualifiedIdent() (*types.Package, string) {
 }
 
 func (r *importReader) pos() token.Pos {
-	if r.p.version >= 1 {
-		r.posv1()
-	} else {
-		r.posv0()
-	}
-
-	if r.prevFile == "" && r.prevLine == 0 && r.prevColumn == 0 {
-		return token.NoPos
-	}
-	return r.p.fake.pos(r.prevFile, int(r.prevLine), int(r.prevColumn))
-}
-
-func (r *importReader) posv0() {
 	delta := r.int64()
 	if delta != deltaNewFile {
 		r.prevLine += delta
@@ -475,18 +436,12 @@ func (r *importReader) posv0() {
 		r.prevFile = r.string()
 		r.prevLine = l
 	}
-}
 
-func (r *importReader) posv1() {
-	delta := r.int64()
-	r.prevColumn += delta >> 1
-	if delta&1 != 0 {
-		delta = r.int64()
-		r.prevLine += delta >> 1
-		if delta&1 != 0 {
-			r.prevFile = r.string()
-		}
+	if r.prevFile == "" && r.prevLine == 0 {
+		return token.NoPos
 	}
+
+	return r.p.fake.pos(r.prevFile, int(r.prevLine))
 }
 
 func (r *importReader) typ() types.Type {
@@ -547,10 +502,10 @@ func (r *importReader) doType(base *types.Named) types.Type {
 	case interfaceType:
 		r.currPkg = r.pkg()
 
-		embeddeds := make([]types.Type, r.uint64())
+		embeddeds := make([]*types.Named, r.uint64())
 		for i := range embeddeds {
 			_ = r.pos()
-			embeddeds[i] = r.typ()
+			embeddeds[i] = r.typ().(*types.Named)
 		}
 
 		methods := make([]*types.Func, r.uint64())
@@ -569,7 +524,7 @@ func (r *importReader) doType(base *types.Named) types.Type {
 			methods[i] = types.NewFunc(mpos, r.currPkg, mname, msig)
 		}
 
-		typ := newInterface(methods, embeddeds)
+		typ := types.NewInterface(methods, embeddeds)
 		r.p.interfaceList = append(r.p.interfaceList, typ)
 		return typ
 	}

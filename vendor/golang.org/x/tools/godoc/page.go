@@ -10,8 +10,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-
-	"golang.org/x/tools/godoc/golangorgenv"
 )
 
 // Page describes the contents of the top-level godoc webpage.
@@ -23,13 +21,11 @@ type Page struct {
 	Query    string
 	Body     []byte
 	GoogleCN bool // page is being served from golang.google.cn
-	TreeView bool // page needs to contain treeview related js and css
 
-	// filled in by ServePage
-	SearchBox       bool
-	Playground      bool
-	Version         string
-	GoogleAnalytics string
+	// filled in by servePage
+	SearchBox  bool
+	Playground bool
+	Version    string
 }
 
 func (p *Presentation) ServePage(w http.ResponseWriter, page Page) {
@@ -39,7 +35,6 @@ func (p *Presentation) ServePage(w http.ResponseWriter, page Page) {
 	page.SearchBox = p.Corpus.IndexEnabled
 	page.Playground = p.ShowPlayground
 	page.Version = runtime.Version()
-	page.GoogleAnalytics = p.GoogleAnalytics
 	applyTemplateToResponseWriter(w, p.GodocHTML, page)
 }
 
@@ -54,27 +49,26 @@ func (p *Presentation) ServeError(w http.ResponseWriter, r *http.Request, relpat
 		}
 	}
 	p.ServePage(w, Page{
-		Title:           "File " + relpath,
-		Subtitle:        relpath,
-		Body:            applyTemplate(p.ErrorHTML, "errorHTML", err),
-		GoogleCN:        googleCN(r),
-		GoogleAnalytics: p.GoogleAnalytics,
+		Title:    "File " + relpath,
+		Subtitle: relpath,
+		Body:     applyTemplate(p.ErrorHTML, "errorHTML", err),
+		GoogleCN: googleCN(r),
 	})
 }
 
-// googleCN reports whether request r is considered
-// to be served from golang.google.cn.
+var onAppengine = false // overridden in appengine.go when on app engine
+
 func googleCN(r *http.Request) bool {
 	if r.FormValue("googlecn") != "" {
 		return true
 	}
+	if !onAppengine {
+		return false
+	}
 	if strings.HasSuffix(r.Host, ".cn") {
 		return true
 	}
-	if !golangorgenv.CheckCountry() {
-		return false
-	}
-	switch r.Header.Get("X-Appengine-Country") {
+	switch r.Header.Get("X-AppEngine-Country") {
 	case "", "ZZ", "CN":
 		return true
 	}
