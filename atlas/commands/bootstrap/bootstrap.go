@@ -140,6 +140,7 @@ func generateProtobuf() error {
 // initGoMod calls "go mod init" to generate .toml files
 func initGoMod() error {
 	fmt.Print("Starting mod project... ")
+	os.Setenv("GO111MODULE", "on")
 	if err := runCommand("go", "mod", "init"); err != nil {
 		fmt.Println(err)
 		return err
