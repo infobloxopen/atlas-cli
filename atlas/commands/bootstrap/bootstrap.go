@@ -95,9 +95,10 @@ func (b Bootstrap) Run() error {
 	if err := generateProtobuf(); err != nil {
 		return err
 	}
-	if err := initDep(); err != nil {
+	if err := initGoMod(); err != nil {
 		return err
 	}
+
 	if err := resolveImports(app.GetDirectories()); err != nil {
 		return err
 	}
@@ -136,10 +137,20 @@ func generateProtobuf() error {
 	return nil
 }
 
-// initDep calls "dep init" to generate .toml files
-func initDep() error {
-	fmt.Print("Starting dep project... ")
-	if err := runCommand("dep", "init"); err != nil {
+// initGoMod calls "go mod init" to generate .toml files
+func initGoMod() error {
+	fmt.Print("Starting mod project... ")
+	os.Setenv("GO111MODULE", "on")
+	if err := runCommand("go", "mod", "init"); err != nil {
+		fmt.Println(err)
+		return err
+	}
+	if err := runCommand("go", "mod", "vendor"); err != nil {
+		fmt.Println(err)
+		return err
+	}
+	if err := runCommand("go", "mod", "download"); err != nil {
+		fmt.Println(err)
 		return err
 	}
 	fmt.Println("done!")

@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("failed to install atlas cli: %v", err)
 	}
 	log.Print("running init-app")
-	if out, err := exec.Command("atlas", "init-app", "-name=test", "-gateway", "-health", "-pubsub").CombinedOutput(); err != nil {
+	if out, err := exec.Command("atlas", "init-app", "-name=test", "-gateway", "-health", "-pubsub", "-debug").CombinedOutput(); err != nil {
 		log.Print(string(out))
 		log.Fatalf("failed to run atlas init-app: %v", err)
 	}
