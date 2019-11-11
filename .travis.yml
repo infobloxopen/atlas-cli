@@ -16,4 +16,4 @@ before_install:
   - chmod +x $GOPATH/bin/dep
 
 script:
-  - make test-with-integration
+  - make templating test-with-integration
