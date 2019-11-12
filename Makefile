@@ -1,5 +1,8 @@
-install:
+install: templating
 	@cd atlas/ && go install
+
+run: templating
+	go run ./atlas/
 
 templating:
 	@cd atlas/ && go generate
