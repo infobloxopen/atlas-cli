@@ -18,3 +18,4 @@
 
 # bindata is not checked in
 atlas/templates/template-bindata.go
+.bindata

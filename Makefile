@@ -4,7 +4,11 @@ install: templating
 run: templating
 	go run ./atlas/
 
-templating:
+.bindata:
+	go get -u github.com/go-bindata/go-bindata/...
+	touch $@
+
+templating: .bindata
 	@cd atlas/ && go generate
 	@go fmt atlas/templates/template-bindata.go
 
