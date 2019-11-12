@@ -2,12 +2,18 @@
 FROM golang:1.13.1 AS builder
 LABEL stage=server-intermediate
 WORKDIR /go/src/{{ .Root }}/{{ .Name }}
+
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o bin/server ./cmd/server
+RUN go build -o bin/server ./cmd/server
 
 # copy the server binary from builder stage; run the server binary
 FROM alpine:latest AS runner
 WORKDIR /bin
+
+# Go programs require libc
+RUN mkdir -p /lib64 && \
+    ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
+
 COPY --from=builder /go/src/{{ .Root }}/{{ .Name }}/bin/server .
 {{ if .WithGateway }}COPY pkg/pb/*.swagger.json www/swagger.json{{ end }}
 {{ if .WithDatabase }}COPY --from=builder /go/src/{{ .Root }}/{{ .Name }}/db/migrations /db/migrations/{{end}}
