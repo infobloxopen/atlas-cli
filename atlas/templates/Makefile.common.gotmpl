@@ -117,3 +117,15 @@ ifeq ($(WITH_DATABASE), true)
 else
 	@echo "Your application doesn't have database, migrations aren't supported"
 endif
+
+.PHONY: run-swagger-ui
+run-swagger-ui:
+ifeq ($(WITH_GATEWAY), true)
+	(sleep 3; open http://127.0.0.1/ ) &
+	docker run --rm -p 80:8080 \
+		-e SWAGGER_JSON=/json/service.swagger.json \
+		-v $(shell pwd)/pkg/pb/:/json \
+		swaggerapi/swagger-ui
+else
+	@echo "Your application doesn't have swagger file"
+endif
