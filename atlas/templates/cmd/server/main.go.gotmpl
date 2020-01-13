@@ -42,6 +42,7 @@ func main() {
 
 func NewLogger() *logrus.Logger {
 	logger := logrus.StandardLogger()
+	logrus.SetFormatter(&logrus.JSONFormatter{})
 
 	// Set the log level on the default logger based on command line flag
 	logLevels := map[string]logrus.Level{
