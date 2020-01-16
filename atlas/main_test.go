@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -39,15 +40,23 @@ func TestMain(m *testing.M) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	output := "./test/bin/server"
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	output := "bin/server"
 	log.Printf("building server")
-	build := exec.Command("go", "build", "-o", output, "./test/cmd/server")
+	build := exec.Command("go", "build", "-o", output, "./cmd/server")
+	basePath := fmt.Sprintf("%s/test", dir)
+	build.Dir = basePath
+	//go build -o  ./test/bin/server ./test/cmd/server
 	if out, err := build.CombinedOutput(); err != nil {
 		log.Print(string(out))
 		log.Fatalf("failed to build server: %v", err)
 	}
 	log.Printf("runnning server")
-	if err := exec.CommandContext(ctx, output).Start(); err != nil {
+	if err := exec.CommandContext(ctx, fmt.Sprintf("%s/%s", basePath, output)).Start(); err != nil {
 		log.Fatalf("failed to start server: %v", err)
 	}
 	log.Print("wait for servers to load up")
