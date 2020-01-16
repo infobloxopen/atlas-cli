@@ -19,6 +19,7 @@ type Application struct {
 	WithDatabase bool
 	WithHealth   bool
 	WithPubsub   bool
+	WithHelm     bool
 	ExpandName   string
 }
 
@@ -116,6 +117,11 @@ func (app Application) GetDirectories() []string {
 		dirnames = append(dirnames,
 			"db/migrations",
 			"db/fixtures",
+		)
+	}
+	if app.WithHelm {
+		dirnames = append(dirnames,
+			"helm",
 		)
 	}
 	return dirnames

@@ -27,7 +27,8 @@ const (
 	flagWithDatabase = "db"
 	flagWithHealth   = "health"
 	flagWithPubsub   = "pubsub"
-	flagExpandName 	 = "expand"
+	flagWithHelm     = "helm"
+	flagExpandName   = "expand"
 )
 
 var (
@@ -40,6 +41,7 @@ var (
 	initializeDatabase = initialize.Bool(flagWithDatabase, false, "initialize the application with database folders")
 	initializeHealth   = initialize.Bool(flagWithHealth, false, "initialize the application with internal health checks")
 	initializePubsub   = initialize.Bool(flagWithPubsub, false, "initialize the application with a pubsub example")
+	initializeHelm     = initialize.Bool(flagWithHelm, false, "initialize the application with the helm charts")
 	initializeExpand   = initialize.String(flagExpandName, "", "the name of the input file for the `expand` command (optional)")
 )
 
@@ -73,6 +75,7 @@ func (b Bootstrap) Run() error {
 		WithDatabase: *initializeDatabase,
 		WithHealth:   *initializeHealth,
 		WithPubsub:   *initializePubsub,
+		WithHelm:     *initializeHelm,
 		ExpandName:   *initializeExpand,
 	}
 
@@ -103,6 +106,12 @@ func (b Bootstrap) Run() error {
 	}
 	if err := initRepo(); err != nil {
 		return err
+	}
+
+	if app.WithHelm {
+		if err := initHelm(app); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -189,6 +198,15 @@ func initRepo() error {
 		return err
 	}
 	if err := runCommand("git", "commit", "-m", "Initial commit"); err != nil {
+		return err
+	}
+	fmt.Println("done!")
+	return nil
+}
+
+func initHelm(app application.Application) error {
+	fmt.Print("Generating helm files... ")
+	if err := runCommand("helm", "create", fmt.Sprintf("./helm/%s", app.Name)); err != nil {
 		return err
 	}
 	fmt.Println("done!")
