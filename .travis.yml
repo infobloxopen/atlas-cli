@@ -11,4 +11,6 @@ env:
 
 install: true
 
-script: go test -v -mod=vendor ./...
+script:
+  - go mod init
+  - make test-with-integration
