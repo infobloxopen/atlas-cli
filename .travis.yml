@@ -9,7 +9,5 @@ go:
 env:
   - GO111MODULE=on GOFLAGS='-mod vendor'
 
-install: true
-
 script:
   - make test-with-integration
