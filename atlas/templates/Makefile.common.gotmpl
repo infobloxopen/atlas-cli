@@ -34,6 +34,7 @@ PROTOBUF_ARGS += --go_out=plugins=grpc:.
 PROTOBUF_ARGS += --validate_out="lang=go:."
 WITH_DATABASE ?= false
 WITH_GATEWAY  ?= false
+WITH_HELM     ?= false
 
 
 ifeq ($(WITH_DATABASE), true)
@@ -129,3 +130,30 @@ ifeq ($(WITH_GATEWAY), true)
 else
 	@echo "Your application doesn't have swagger file"
 endif
+
+#configuration for helm
+{{ if .WithHelm }}
+.PHONY: helm-lint
+helm-lint:
+	cd helm && helm lint -f $(CHART)/minikube.yaml $(CHART)
+
+.PHONY: helm-archive
+helm-archive:
+	helm init --client-only
+	helm package helm/$(CHART) --version $(CHART_VERSION)
+
+.PHONY: helm-properties
+helm-properties: helm/tpl.helm.properties
+	@sed 's/{CHART_FILE}/$(CHART_FILE)/g' helm/tpl.helm.properties > helm.properties
+
+.PHONY: push-chart
+push-chart: helm-lint helm-archive helm-properties
+	AWS_ACCESS_KEY_ID?=`aws configure get aws_access_key_id`
+	AWS_SECRET_ACCESS_KEY?=`aws configure get aws_secret_access_key`
+	AWS_REGION?=`aws configure get region`
+	docker run -e AWS_REGION=${AWS_REGION} \
+		-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+		-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+		-v $(PWD)/helm:/pkg \
+		${CHART_IMAGE} s3 push /pkg/$(CHART_FILE) {{ .Registry }}
+{{end}}

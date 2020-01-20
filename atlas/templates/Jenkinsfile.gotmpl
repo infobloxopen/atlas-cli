@@ -48,6 +48,20 @@ pipeline {
         }
       }
     }
+    {{ if .WithHelm }}
+    stage('Push charts') {
+        steps {
+            dir ("${WORKSPACE}/${DIRECTORY}") {
+                withDockerRegistry([credentialsId: "<insert-the-creds-id>", url: ""]) {
+                    withAWS(region:'<insert-the-region-id>', credentials:'<insert-the-creds-id>') {
+                        sh "IMAGE_VERSION=\$(IMAGE_VERSION)-j$BUILD_NUMBER make push-chart"
+                    }
+                }
+                archiveArtifacts artifacts: 'helm/$(CHART)-*.tgz'
+                archiveArtifacts artifacts: 'helm.properties'
+            }
+        }
+    }{{end}}
   }
   post {
     always {

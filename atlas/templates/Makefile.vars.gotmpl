@@ -47,3 +47,13 @@ GO_PACKAGES             := $(shell go list ./... | grep -v vendor)
 {{ if .WithGateway}}
 WITH_GATEWAY = true
 {{end}}
+
+#configuration for helm
+{{ if .WithHelm }}
+WITH_HELM      = true
+BUILD_NUMBER  ?=0
+CHART         := {{ .Name }}
+CHART_IMAGE   ?= infoblox/helm:2.14.3-1
+CHART_VERSION ?= $(shell git describe --tags --long)-j$(BUILD_NUMBER)
+CHART_FILE    := $(CHART)-$(CHART_VERSION).tgz
+{{end}}
