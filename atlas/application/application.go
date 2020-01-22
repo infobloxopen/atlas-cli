@@ -3,6 +3,7 @@ package application
 import (
 	"errors"
 	"fmt"
+	"github.com/infobloxopen/atlas-cli/atlas/application/helm"
 	"github.com/infobloxopen/atlas-cli/atlas/templates"
 	"github.com/infobloxopen/atlas-cli/atlas/utill"
 	"os"
@@ -19,7 +20,8 @@ type Application struct {
 	WithDatabase bool
 	WithHealth   bool
 	WithPubsub   bool
-	WithHelm     bool
+	WithHelm bool
+	Helm     *helm.Helm
 	ExpandName   string
 }
 
@@ -82,6 +84,9 @@ func (app Application) initializeFiles() error {
 	if app.WithDatabase {
 		fileInitializers = append(fileInitializers, Application.generateMigrationFile)
 	}
+	if app.Helm != nil {
+		fileInitializers = append(fileInitializers, Application.generateHelmCharts)
+	}
 
 	for _, initializer := range fileInitializers {
 		if err := initializer(app); err != nil {
@@ -119,9 +124,9 @@ func (app Application) GetDirectories() []string {
 			"db/fixtures",
 		)
 	}
-	if app.WithHelm {
+	if app.Helm != nil {
 		dirnames = append(dirnames,
-			"helm",
+			app.Helm.GetDirs()...,
 		)
 	}
 	return dirnames
@@ -216,4 +221,13 @@ func (app Application) generateService() error {
 
 func (app Application) generateServiceTest() error {
 	return app.generateFile("pkg/svc/zserver_test.go", "templates/pkg/svc/zserver_test.go.gotmpl")
+}
+
+func (app Application) generateHelmCharts() error {
+	for helmPath, tmplPath := range app.Helm.GetFiles(app.WithDatabase) {
+		if err := app.generateFile(helmPath, tmplPath); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/infobloxopen/atlas-cli/atlas/application"
+	"github.com/infobloxopen/atlas-cli/atlas/application/helm"
 	"github.com/infobloxopen/atlas-cli/atlas/utill"
 	"go/build"
 	"golang.org/x/tools/imports"
@@ -75,8 +76,12 @@ func (b Bootstrap) Run() error {
 		WithDatabase: *initializeDatabase,
 		WithHealth:   *initializeHealth,
 		WithPubsub:   *initializePubsub,
-		WithHelm:     *initializeHelm,
+		WithHelm: *initializeHelm,
 		ExpandName:   *initializeExpand,
+	}
+
+	if app.WithHelm {
+		app.Helm = helm.New(app.Name)
 	}
 
 	if err := app.Initialize(); err != nil {
@@ -106,12 +111,6 @@ func (b Bootstrap) Run() error {
 	}
 	if err := initRepo(); err != nil {
 		return err
-	}
-
-	if app.WithHelm {
-		if err := initHelm(app); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -198,15 +197,6 @@ func initRepo() error {
 		return err
 	}
 	if err := runCommand("git", "commit", "-m", "Initial commit"); err != nil {
-		return err
-	}
-	fmt.Println("done!")
-	return nil
-}
-
-func initHelm(app application.Application) error {
-	fmt.Print("Generating helm files... ")
-	if err := runCommand("helm", "create", fmt.Sprintf("./helm/%s", app.Name)); err != nil {
 		return err
 	}
 	fmt.Println("done!")
