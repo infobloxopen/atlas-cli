@@ -57,7 +57,7 @@ pipeline {
                         sh "IMAGE_VERSION=\$(IMAGE_VERSION)-j$BUILD_NUMBER make push-chart"
                     }
                 }
-                archiveArtifacts artifacts: 'helm/$(CHART)-*.tgz'
+                archiveArtifacts artifacts: 'helm/$(CHART_NAME)-*.tgz'
                 archiveArtifacts artifacts: 'helm.properties'
             }
         }
