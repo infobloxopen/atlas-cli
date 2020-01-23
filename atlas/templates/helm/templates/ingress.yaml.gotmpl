@@ -4,6 +4,7 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: {{ "{{" }} $fullName {{ "}}" }}
+  namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
   labels:
 {{ "{{" }} include "{{ .Name }}.labels" . | indent 4 {{ "}}" }}
   {{ "{{" }}- with .Values.ingress.annotations {{ "}}" }}
@@ -18,7 +19,7 @@ spec:
       {{ "{{" }}- range .hosts {{ "}}" }}
         - {{ "{{" }} . | quote {{ "}}" }}
       {{ "{{" }}- end {{ "}}" }}
-      secretName: {{ "{{" }} .secretName {{ "}}" }}
+      secretName: {{ "{{" }} tpl .Values.ingress.tls.secretName . {{ "}}" }}
   {{ "{{" }}- end {{ "}}" }}
 {{ "{{" }}- end {{ "}}" }}
   rules:
@@ -27,10 +28,10 @@ spec:
       http:
         paths:
         {{ "{{" }}- range .paths {{ "}}" }}
-          - path: {{ "{{" }} . {{ "}}" }}
+          - path: {{ "{{" }} .Values.ingress.path {{ "}}" }}
             backend:
-              serviceName: {{ "{{" }} $fullName {{ "}}" }}
-              servicePort: http
+              serviceName: {{ "{{" }} tpl .Values.{{ .Name }}.serviceName . {{ "}}" }}
+              servicePort: {{ "{{" }} .Values.{{ .Name }}.httpPort {{ "}}" }}
         {{ "{{" }}- end {{ "}}" }}
   {{ "{{" }}- end {{ "}}" }}
 {{ "{{" }}- end {{ "}}" }}

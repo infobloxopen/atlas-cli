@@ -2,15 +2,21 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ "{{" }} include "{{ .Name }}.fullname" . {{ "}}" }}
+  namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
   labels:
 {{ "{{" }} include "{{ .Name }}.labels" . | indent 4 {{ "}}" }}
 spec:
   type: {{ "{{" }} .Values.service.type {{ "}}" }}
   ports:
-    - port: {{ "{{" }} .Values.service.port {{ "}}" }}
-      targetPort: http
-      protocol: TCP
-      name: http
+    - name: grpc
+      port: {{ "{{" }} .Values.service.grpcPort {{ "}}" }}
+      targetPort: {{ "{{" }} .Values.{{ .Name }}.grpcPort {{ "}}" }}
+      protocol: {{ "{{" }} .Values.grpcProtocol {{ "}}" }}
+    - name: http
+      port: {{ "{{" }} .Values.service.httpPort {{ "}}" }}
+      targetPort: {{ "{{" }} .Values.{{ .Name }}.httpPort {{ "}}" }}
+      protocol: {{ "{{" }} .Values.httpProtocol {{ "}}" }}
   selector:
+    app: {{ "{{" }} include "{{ .Name }}.fullname" . {{ "}}" }}
     app.kubernetes.io/name: {{ "{{" }} include "{{ .Name }}.name" . {{ "}}" }}
     app.kubernetes.io/instance: {{ "{{" }} .Release.Name {{ "}}" }}

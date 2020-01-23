@@ -2,17 +2,20 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ "{{" }} include "{{ .Name }}.fullname" . {{ "}}" }}
+  namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
   labels:
 {{ "{{" }} include "{{ .Name }}.labels" . | indent 4 {{ "}}" }}
 spec:
   replicas: {{ "{{" }} .Values.replicaCount {{ "}}" }}
   selector:
     matchLabels:
+      app: {{ "{{" }} include "{{ .Name }}.name" . {{ "}}" }}
       app.kubernetes.io/name: {{ "{{" }} include "{{ .Name }}.name" . {{ "}}" }}
       app.kubernetes.io/instance: {{ "{{" }} .Release.Name {{ "}}" }}
   template:
     metadata:
       labels:
+        app: {{ "{{" }} include "{{ .Name }}.name" . {{ "}}" }}
         app.kubernetes.io/name: {{ "{{" }} include "{{ .Name }}.name" . {{ "}}" }}
         app.kubernetes.io/instance: {{ "{{" }} .Release.Name {{ "}}" }}
     spec:
@@ -20,22 +23,36 @@ spec:
       imagePullSecrets:
         {{ "{{" }}- toYaml . | nindent 8 {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
+      serviceAccountName: {{ "{{" }} include "{{ .Name }}.name" . {{ "}}" }}
       containers:
         - name: {{ "{{" }} .Chart.Name {{ "}}" }}
           image: "{{ "{{" }} .Values.image.repository {{ "}}" }}:{{ "{{" }} .Values.image.tag {{ "}}" }}"
           imagePullPolicy: {{ "{{" }} .Values.image.pullPolicy {{ "}}" }}
           ports:
+            - name: grpc
+              containerPort: {{ "{{" }} .Values.{{ .Name }}.grpcPort {{ "}}" }}
+              protocol: {{ "{{" }} .Values.grpcProtocol {{ "}}" }}
             - name: http
-              containerPort: 80
-              protocol: TCP
+              containerPort: {{ "{{" }} .Values.{{ .Name }}.httpPort {{ "}}" }}
+              protocol: {{ "{{" }} .Values.httpProtocol {{ "}}" }}
+            - name: health
+              containerPort: {{ "{{" }} .Values.healthPort {{ "}}" }}
           livenessProbe:
             httpGet:
-              path: /
-              port: http
+              path: /health
+              port: {{ "{{" }} .Values.healthPort {{ "}}" }}
+              scheme: HTTP
+            initialDelaySeconds: 3
+            timeoutSeconds: 10
           readinessProbe:
             httpGet:
-              path: /
-              port: http
+              path: /ready
+              port: {{ "{{" }} .Values.healthPort {{ "}}" }}
+              scheme: HTTP
+            initialDelaySeconds: 2
+            periodSeconds: 5
+            successThreshold: 1
+            failureThreshold: 10
           resources:
             {{ "{{" }}- toYaml .Values.resources | nindent 12 {{ "}}" }}
       {{ "{{" }}- with .Values.nodeSelector {{ "}}" }}
