@@ -54,6 +54,6 @@ WITH_HELM      = true
 BUILD_NUMBER  ?=0
 CHART_NAME    := {{ .Name }}
 CHART_IMAGE   ?= infoblox/helm:2.14.3-1
-CHART_VERSION ?= $(shell git describe --tags --long)-j$(BUILD_NUMBER)
+CHART_VERSION ?= $(shell git describe --long --tags --dirty=-unreleased --always || echo pre-commit)-j$(BUILD_NUMBER)
 CHART_FILE    := $(CHART_NAME)-$(CHART_VERSION).tgz
 {{end}}
