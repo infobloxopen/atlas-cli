@@ -20,8 +20,8 @@ type Application struct {
 	WithDatabase bool
 	WithHealth   bool
 	WithPubsub   bool
-	WithHelm bool
-	Helm     *helm.Helm
+	WithHelm     bool
+	Helm         *helm.Helm
 	ExpandName   string
 }
 

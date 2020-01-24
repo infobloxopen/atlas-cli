@@ -76,7 +76,7 @@ func (b Bootstrap) Run() error {
 		WithDatabase: *initializeDatabase,
 		WithHealth:   *initializeHealth,
 		WithPubsub:   *initializePubsub,
-		WithHelm: *initializeHelm,
+		WithHelm:     *initializeHelm,
 		ExpandName:   *initializeExpand,
 	}
 
@@ -92,8 +92,8 @@ func (b Bootstrap) Run() error {
 		if err := expandResource(app.Name, app.ExpandName, app.WithDatabase); err != nil {
 			return err
 		}
-		if err := CombineFiles("pkg/pb/service.proto", "pkg/pb/" + app.Name + ".proto"); err != nil {
-				return err
+		if err := CombineFiles("pkg/pb/service.proto", "pkg/pb/"+app.Name+".proto"); err != nil {
+			return err
 		}
 		if err := CombineFiles("pkg/svc/zserver.go", "pkg/svc/servers.go"); err != nil {
 			return err
