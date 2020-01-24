@@ -1,0 +1,50 @@
+ apiVersion: v1
+kind: Pod
+metadata:
+    namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
+    name: {{ "{{" }} .Chart.Name {{ "}}" }}-service-migration
+spec:
+  restartPolicy: OnFailure
+  initContainers:
+  - name: tmp-container
+    image: {{ "{{" }} .Values.migration.image {{ "}}" }}:{{ "{{" }} .Values.migration.version | default .Chart.Version {{ "}}" }}
+    imagePullPolicy: {{ "{{" }} .Values.migration.imagePullPolicy {{ "}}" }}
+    volumeMounts:
+    - mountPath: "{ Fill this in }"
+      name: migrations
+    command:
+    - "{ Fill this in }"
+  containers:
+    - name: migration
+      image: {{ "{{" }} .Values.migration.image {{ "}}" }}:{{ "{{" }} .Values.migration.version {{ "}}" }}
+      imagePullPolicy: {{ "{{" }} .Values.migration.imagePullPolicy {{ "}}" }}
+      volumeMounts:
+      - mountPath: "{ Fill this in }"
+        name: migrations
+      env:
+      - name: MB_USER
+        value: {{ "{{" }} tpl .Values.db.username . {{ "}}" }}
+      - name: MB_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: "{ Fill this in }"
+            key: password
+      - name: MB_DB
+        value: {{ "{{" }} tpl .Values.db.database . {{ "}}" }}
+      - name: MB_HOST
+        value: {{ "{{" }} tpl .Values.db.server . {{ "}}" }}
+      - name: MB_PORT
+        value: {{ "{{" }} .Values.db.port | quote {{ "}}" }}
+      - name: MB_SSLMODE
+        value: {{ "{{" }} tpl .Values.db.sslMode . {{ "}}" }}
+      - name: LOGGING_LEVEL
+        value: debug
+      - name: dsn
+        value: postgres://$(MB_USER):$(MB_PASSWORD)@$(MB_HOST):$(MB_PORT)/$(MB_DB)?sslmode=$(MB_SSLMODE)
+      command:
+      - /migrate
+      args:
+      - "{ Fill this in }"
+  volumes:
+  - name: migrations
+    emptyDir: {}

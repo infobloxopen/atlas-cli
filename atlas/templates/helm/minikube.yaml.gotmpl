@@ -1,0 +1,36 @@
+
+imagePullPolicy: IfNotPresent
+version: latest
+docker:
+  registry: https://index.docker.io/v1/
+  username: "{ Fill this in }"
+  password: "{ Fill this in }"
+
+#### Values that will be populated from env vaues
+env: minikube
+
+{{ if .WithDatabase }}
+db:
+  username: postgres
+  server: "{{ "{{" }} include \"{{ .Name }}.fullname\" . {{ "}}" }}-postgres.{{ "{{" }} .Release.Namespace {{ "}}" }}"
+  password: postgres
+
+postgres:
+  enabled: true
+  name: postgres
+  image: postgres
+  version: "10.5"
+  imagePullPolicy: IfNotPresent
+  port: "5432"
+{{ end }}
+
+#### Values that will be populated from global values
+space:
+  enabled: false
+
+{{ .Name }}:
+  namespace: "{{ .Name }}-{{ "{{" }} .Values.env {{ "}}" }}"
+  serviceName: "{{ .Name }}"
+  httpPort: "{{ "{{" }} .Values.{{ .Name }}.httpPort {{ "}}" }}"
+  grpcPort: "{{ "{{" }} .Values.{{ .Name }}.grpcPort {{ "}}" }}"
+
