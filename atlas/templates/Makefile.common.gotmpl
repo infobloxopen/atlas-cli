@@ -135,7 +135,7 @@ endif
 {{ if .WithHelm }}
 .PHONY: helm-lint
 helm-lint:
-	cd helm && helm lint -f $(CHART_NAME)/minikube.yaml $(CHART_NAME)
+	cd helm && helm lint -f $(CHART_NAME)/minikube-values.yaml $(CHART_NAME)
 
 .PHONY: helm-archive
 helm-archive:

@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-    name: {{ "{{" }} .Chart.Name {{ "}}" }}-postgres
+    name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-postgres
     namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
     labels:
         app.kubernetes.io/name: postgres
@@ -17,7 +17,7 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-    name: {{ "{{" }} .Chart.Name {{ "}}" }}-postgres
+    name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-postgres
     namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
     labels:
         app.kubernetes.io/name: postgres
@@ -43,7 +43,7 @@ spec:
                       - name: POSTGRES_PASSWORD
                         valueFrom:
                           secretKeyRef:
-                            name: "{ Fill this in }"
+                            name: {{  include "chart.fullname" . }}-db-key
                             key: password
                       - name: POSTGRES_DB
                         value: {{ "{{" }} .Values.db.database {{ "}}" }}

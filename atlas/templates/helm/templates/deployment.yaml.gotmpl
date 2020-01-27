@@ -1,33 +1,51 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ "{{" }} include "{{ .Name }}.fullname" . {{ "}}" }}
+  name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}
   namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
   labels:
-{{ "{{" }} include "{{ .Name }}.labels" . | indent 4 {{ "}}" }}
+{{ "{{" }} include "chart.labels" . | indent 4 {{ "}}" }}
 spec:
   replicas: {{ "{{" }} .Values.replicaCount {{ "}}" }}
   selector:
     matchLabels:
-      app: {{ "{{" }} include "{{ .Name }}.name" . {{ "}}" }}
-      app.kubernetes.io/name: {{ "{{" }} include "{{ .Name }}.name" . {{ "}}" }}
+      app: {{ "{{" }} include "chart.fullname" . {{ "}}" }}
+      app.kubernetes.io/name: {{ "{{" }} include "chart.name" . {{ "}}" }}
       app.kubernetes.io/instance: {{ "{{" }} .Release.Name {{ "}}" }}
   template:
     metadata:
       labels:
-        app: {{ "{{" }} include "{{ .Name }}.name" . {{ "}}" }}
-        app.kubernetes.io/name: {{ "{{" }} include "{{ .Name }}.name" . {{ "}}" }}
+        app: {{ "{{" }} include "chart.fullname" . {{ "}}" }}
+        app.kubernetes.io/name: {{ "{{" }} include "chart.name" . {{ "}}" }}
         app.kubernetes.io/instance: {{ "{{" }} .Release.Name {{ "}}" }}
     spec:
     {{ "{{" }}- with .Values.imagePullSecrets {{ "}}" }}
       imagePullSecrets:
         {{ "{{" }}- toYaml . | nindent 8 {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
-      serviceAccountName: {{ "{{" }} include "{{ .Name }}.name" . {{ "}}" }}
+      serviceAccountName: {{ "{{" }} include "chart.fullname" . {{ "}}" }}
       containers:
         - name: {{ "{{" }} .Chart.Name {{ "}}" }}
           image: "{{ "{{" }} .Values.image.repository {{ "}}" }}:{{ "{{" }} .Values.image.tag {{ "}}" }}"
           imagePullPolicy: {{ "{{" }} .Values.image.pullPolicy {{ "}}" }}
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.db.user }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-db-key
+                  key: password
+            - name: POSTGRES_SSLMODE
+              value: {{ "{{" }} .Values.db.ssl_mode {{ "}}" }}
+            - name: POSTGRES_HOST
+              value: "{{ "{{" }} tpl (.Values.db.server) . {{ "}}" }}"
+            - name: POSTGRES_PORT
+              value: {{ "{{" }} .Values.db.port | quote {{ "}}" }}
+            - name: POSTGRES_DB
+              value: {{ "{{" }} .Values.db.username {{ "}}" }}
+            - name: dsn
+              value: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSLMODE)
           ports:
             - name: grpc
               containerPort: {{ "{{" }} .Values.{{ .Name }}.grpcPort {{ "}}" }}
@@ -37,6 +55,11 @@ spec:
               protocol: {{ "{{" }} .Values.httpProtocol {{ "}}" }}
             - name: health
               containerPort: {{ "{{" }} .Values.healthPort {{ "}}" }}
+          args: [
+            "--database.dsn=$(dsn)",
+            "--default.limit",
+            "{{ .Values.args.limit }}"
+          ]
           livenessProbe:
             httpGet:
               path: /health

@@ -2,7 +2,7 @@
 kind: Pod
 metadata:
     namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
-    name: {{ "{{" }} .Chart.Name {{ "}}" }}-service-migration
+    name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-service-migration
 spec:
   restartPolicy: OnFailure
   initContainers:
@@ -10,16 +10,19 @@ spec:
     image: {{ "{{" }} .Values.migration.image {{ "}}" }}:{{ "{{" }} .Values.migration.version | default .Chart.Version {{ "}}" }}
     imagePullPolicy: {{ "{{" }} .Values.migration.imagePullPolicy {{ "}}" }}
     volumeMounts:
-    - mountPath: "{ Fill this in }"
+    - mountPath: "/service-migrations"
       name: migrations
     command:
-    - "{ Fill this in }"
+    - "cp"
+    - "-r"
+    - "/db/migrations"
+    - "/service-migrations"
   containers:
     - name: migration
       image: {{ "{{" }} .Values.migration.image {{ "}}" }}:{{ "{{" }} .Values.migration.version {{ "}}" }}
       imagePullPolicy: {{ "{{" }} .Values.migration.imagePullPolicy {{ "}}" }}
       volumeMounts:
-      - mountPath: "{ Fill this in }"
+      - mountPath: service-migrations
         name: migrations
       env:
       - name: MB_USER
@@ -27,7 +30,7 @@ spec:
       - name: MB_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: "{ Fill this in }"
+            name: {{ include "chart.fullname" . }}-db-key
             key: password
       - name: MB_DB
         value: {{ "{{" }} tpl .Values.db.database . {{ "}}" }}
@@ -44,7 +47,11 @@ spec:
       command:
       - /migrate
       args:
-      - "{ Fill this in }"
+      - "--source"
+      - "file:///service-migrations/migrations"
+      - "--database.dsn"
+      - "$(dsn)"
+      - up
   volumes:
   - name: migrations
     emptyDir: {}

@@ -2,15 +2,15 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-{{ if .WithHealth }}healthPort: 80"{{ end }}
+{{ if .WithHealth }}healthPort: 80{{ end }}
 httpProtocol: TCP
 grpcProtocol: TCP
 replicaCount: 1
 
 image:
-  repository: {{ .Name }}
+  repository: nginx
   tag: stable
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
 
 imagePullSecrets: []
 nameOverride: ""
@@ -25,7 +25,7 @@ ingress:
   enabled: false
   path: {{ .Name }}
   annotations: {}
-    # kubernetes.io/ingress.class: {{ .Name }}
+    # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
     - host: chart-example.local
@@ -77,3 +77,6 @@ db:
   serviceName: {{ .Name }}
   httpPort: 80
   grpcPort: 80
+
+authURL:
+  "{ Fill this in }"
