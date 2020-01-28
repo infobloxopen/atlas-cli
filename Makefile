@@ -9,7 +9,7 @@ run: templating
 	touch $@
 
 templating: .bindata
-	@cd atlas/ && go generate
+	@cd atlas/ && rm -f templates/template-bindata.go && go generate
 	@go fmt atlas/templates/template-bindata.go
 
 test:
