@@ -58,7 +58,7 @@ WITH_GATEWAY = true
 BUILD_NUMBER  ?=0
 HELM_IMAGE    := infoblox/helm:2.14.3-1
 HELM := $(DOCKER_RUNNER) $(DOCKER_ENV) -w $(SRCROOT_IN_CONTAINER) $(HELM_IMAGE)
-CHART_NAME    := {{ .Helm.GetName() }}
+CHART_NAME    := {{ .Helm.GetName }}
 CHART_VERSION ?= $(shell git describe --long --tags --dirty=-unreleased --always || echo pre-commit)-j$(BUILD_NUMBER)
 CHART_FILE    := $(CHART_NAME)-$(CHART_VERSION).tgz
 {{end}}

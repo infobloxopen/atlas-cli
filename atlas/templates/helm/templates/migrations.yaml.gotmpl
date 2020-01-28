@@ -30,7 +30,7 @@ spec:
       - name: MB_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: {{ include "chart.fullname" . }}-db-key
+            name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-db-key
             key: password
       - name: MB_DB
         value: {{ "{{" }} tpl .Values.db.database . {{ "}}" }}

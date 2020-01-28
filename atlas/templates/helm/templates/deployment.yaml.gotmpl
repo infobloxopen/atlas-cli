@@ -30,7 +30,7 @@ spec:
           imagePullPolicy: {{ "{{" }} .Values.image.pullPolicy {{ "}}" }}
           env:
             - name: POSTGRES_USER
-              value: {{ .Values.db.user }}
+              value: {{ "{{" }} .Values.db.user {{ "}}" }}
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -58,7 +58,7 @@ spec:
           args: [
             "--database.dsn=$(dsn)",
             "--default.limit",
-            "{{ .Values.args.limit }}"
+            "{{ "{{" }} .Values.args.limit {{ "}}" }}"
           ]
           livenessProbe:
             httpGet:
