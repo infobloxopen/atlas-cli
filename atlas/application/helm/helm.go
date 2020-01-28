@@ -20,7 +20,9 @@ func replaceName(name string) string {
 	replaceList := []string{".", "_", ":"}
 	helmName := name
 	for _, s := range replaceList {
-		helmName = strings.ReplaceAll(name, s, "-")
+		if strings.Contains(name, s) {
+			helmName = strings.ReplaceAll(name, s, "-")
+		}
 	}
 	return helmName
 }
