@@ -13,4 +13,4 @@ install: true
 
 script:
   - go mod init
-  - make test-with-integration
+  - make templating test-with-integration
