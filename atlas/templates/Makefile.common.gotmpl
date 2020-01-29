@@ -93,9 +93,6 @@ protobuf-atlas:
 
 .PHONY vendor: vendor-atlas
 vendor-atlas:
-ifneq ($(shell test -e $(GO_MOD) && echo -n y),y)
-	@go mod init
-endif
 	@go mod tidy
 	@go mod vendor
 	@go mod download

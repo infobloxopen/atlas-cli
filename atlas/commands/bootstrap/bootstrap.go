@@ -27,7 +27,7 @@ const (
 	flagWithDatabase = "db"
 	flagWithHealth   = "health"
 	flagWithPubsub   = "pubsub"
-	flagExpandName 	 = "expand"
+	flagExpandName   = "expand"
 )
 
 var (
@@ -84,8 +84,8 @@ func (b Bootstrap) Run() error {
 		if err := expandResource(app.Name, app.ExpandName, app.WithDatabase); err != nil {
 			return err
 		}
-		if err := CombineFiles("pkg/pb/service.proto", "pkg/pb/" + app.Name + ".proto"); err != nil {
-				return err
+		if err := CombineFiles("pkg/pb/service.proto", "pkg/pb/"+app.Name+".proto"); err != nil {
+			return err
 		}
 		if err := CombineFiles("pkg/svc/zserver.go", "pkg/svc/servers.go"); err != nil {
 			return err
@@ -140,17 +140,13 @@ func generateProtobuf() error {
 // initGoMod calls "go mod init" to generate .toml files
 func initGoMod() error {
 	fmt.Print("Starting mod project... ")
-	os.Setenv("GO111MODULE", "on")
 	if err := runCommand("go", "mod", "init"); err != nil {
-		fmt.Println(err)
 		return err
 	}
 	if err := runCommand("go", "mod", "vendor"); err != nil {
-		fmt.Println(err)
 		return err
 	}
 	if err := runCommand("go", "mod", "download"); err != nil {
-		fmt.Println(err)
 		return err
 	}
 	fmt.Println("done!")
