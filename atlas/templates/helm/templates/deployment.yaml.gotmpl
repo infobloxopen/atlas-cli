@@ -30,14 +30,14 @@ spec:
           imagePullPolicy: {{ "{{" }} .Values.image.pullPolicy {{ "}}" }}
           env:
             - name: POSTGRES_USER
-              value: {{ "{{" }} .Values.db.user {{ "}}" }}
+              value: {{ "{{" }} .Values.db.username {{ "}}" }}
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-db-key
                   key: password
             - name: POSTGRES_SSLMODE
-              value: {{ "{{" }} .Values.db.ssl_mode {{ "}}" }}
+              value: {{ "{{" }} .Values.db.sslMode {{ "}}" }}
             - name: POSTGRES_HOST
               value: "{{ "{{" }} tpl (.Values.db.server) . {{ "}}" }}"
             - name: POSTGRES_PORT
@@ -48,10 +48,10 @@ spec:
               value: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSLMODE)
           ports:
             - name: grpc
-              containerPort: {{ "{{" }} .Values.{{ .Name }}.grpcPort {{ "}}" }}
+              containerPort: {{ "{{" }} .Values.app.grpcPort {{ "}}" }}
               protocol: {{ "{{" }} .Values.grpcProtocol {{ "}}" }}
             - name: http
-              containerPort: {{ "{{" }} .Values.{{ .Name }}.httpPort {{ "}}" }}
+              containerPort: {{ "{{" }} .Values.app.httpPort {{ "}}" }}
               protocol: {{ "{{" }} .Values.httpProtocol {{ "}}" }}
             - name: health
               containerPort: {{ "{{" }} .Values.healthPort {{ "}}" }}

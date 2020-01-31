@@ -1,4 +1,4 @@
-# Default values for {{ .Name }}.
+# Default values for {{ .Helm.GetName }}.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -22,7 +22,7 @@ service:
   httpPort: 80
 
 ingress:
-  enabled: false
+  enabled: true
   path: {{ .Name }}
   annotations: {}
     # kubernetes.io/ingress.class: nginx
@@ -59,7 +59,7 @@ args:
 
 {{ if .WithDatabase }}
 postgres:
-  enabled: false
+  enabled: true
 migration:
   name: migration
   image: migration
@@ -73,10 +73,8 @@ db:
   port: "5432"
 {{ end }}
 
-{{ .Name }}:
-  serviceName: {{ .Name }}
-  httpPort: 80
-  grpcPort: 80
+app:
+  serviceName: {{ .Helm.GetName }}
 
 authURL:
   "{ Fill this in }"

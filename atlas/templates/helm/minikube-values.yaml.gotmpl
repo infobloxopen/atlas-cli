@@ -12,7 +12,7 @@ env: minikube
 {{ if .WithDatabase }}
 db:
   username: postgres
-  server: "{{ "{{" }} include \"{{ .Name }}.fullname\" . {{ "}}" }}-postgres.{{ "{{" }} .Release.Namespace {{ "}}" }}"
+  server: "{{ "{{" }} include \"chart.fullname\" . {{ "}}" }}-postgres.{{ "{{" }} .Release.Namespace {{ "}}" }}"
   password: postgres
 
 postgres:
@@ -24,15 +24,11 @@ postgres:
   port: "5432"
 {{ end }}
 
-#### Values that will be populated from global values
-space:
-  enabled: false
-
-{{ .Name }}:
-  namespace: "{{ .Name }}-{{ "{{" }} .Values.env {{ "}}" }}"
-  serviceName: "{{ .Name }}"
-  httpPort: "{{ "{{" }} .Values.{{ .Name }}.httpPort {{ "}}" }}"
-  grpcPort: "{{ "{{" }} .Values.{{ .Name }}.grpcPort {{ "}}" }}"
+app:
+  namespace: "{{ .Helm.GetName }}-{{ "{{" }} .Values.env {{ "}}" }}"
+  serviceName: "{{ .Helm.GetName }}"
+  httpPort: 80
+  grpcPort: 80
 
 secrets:
-  enabled: false
+  enabled: true

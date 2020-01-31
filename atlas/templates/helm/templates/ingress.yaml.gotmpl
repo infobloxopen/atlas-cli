@@ -34,8 +34,8 @@ spec:
         {{ "{{" }}- range .paths {{ "}}" }}
           - path: {{ "{{" }} .Values.ingress.path {{ "}}" }}
             backend:
-              serviceName: {{ "{{" }} tpl .Values.{{ .Name }}.serviceName . {{ "}}" }}
-              servicePort: {{ "{{" }} .Values.{{ .Name }}.httpPort {{ "}}" }}
+              serviceName: {{ "{{" }} tpl .Values.app.serviceName . {{ "}}" }}
+              servicePort: {{ "{{" }} .Values.app.httpPort {{ "}}" }}
         {{ "{{" }}- end {{ "}}" }}
   {{ "{{" }}- end {{ "}}" }}
 {{ "{{" }}- end {{ "}}" }}
