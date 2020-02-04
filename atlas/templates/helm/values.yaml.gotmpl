@@ -2,15 +2,15 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-{{ if .WithHealth }}healthPort: 80{{ end }}
+{{ if .WithHealth }}healthPort: 8081{{ end }}
 httpProtocol: TCP
 grpcProtocol: TCP
 replicaCount: 1
 
 image:
-  repository: nginx
-  tag: stable
-  pullPolicy: IfNotPresent
+  repository: '{{ "{{" }} include "chart.name" . {{ "}}" }}'
+  tag: latest
+  pullPolicy: Always
 
 imagePullSecrets: []
 nameOverride: ""
@@ -18,18 +18,20 @@ fullnameOverride: ""
 
 service:
   type: ClusterIP
-  grpcPort: 80
-  httpPort: 80
+  grpcPort: 9090
+  httpPort: 8080
 
 ingress:
-  enabled: true
-  path: {{ .Name }}
+  enabled: false
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: chart-example.local
-      paths: []
+    - host: '{{ "{{" }} .Values.ingress.path {{ "}}" }}/{{ "{{" }} include "chart.fullname" . {{ "}}" }}/'
+      paths:
+        - path: "/*"
+          name: '{{ "{{" }} include "chart.fullname" . {{ "}}" }}'
+          port: "{{ "{{" }} .Values.service.httpPort {{ "}}" }}"
 
   tls: []
   #  - secretName: chart-example-tls
@@ -53,9 +55,6 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-args:
-  limit: 500
 
 {{ if .WithDatabase }}
 postgres:

@@ -28,14 +28,14 @@ spec:
 {{ "{{" }}- end {{ "}}" }}
   rules:
   {{ "{{" }}- range .Values.ingress.hosts {{ "}}" }}
-    - host: {{ "{{" }} .host | quote {{ "}}" }}
+    - host: {{ "{{" }} tpl .host $ {{ "}}" }}
       http:
         paths:
         {{ "{{" }}- range .paths {{ "}}" }}
-          - path: {{ "{{" }} .Values.ingress.path {{ "}}" }}
+          - path: {{ "{{" }} .path {{ "}}" }}
             backend:
-              serviceName: {{ "{{" }} tpl .Values.app.serviceName . {{ "}}" }}
-              servicePort: {{ "{{" }} .Values.app.httpPort {{ "}}" }}
+              serviceName: {{ "{{" }} tpl .name $ {{ "}}" }}
+              servicePort: {{ "{{" }} tpl .port $ {{ "}}" }}
         {{ "{{" }}- end {{ "}}" }}
   {{ "{{" }}- end {{ "}}" }}
 {{ "{{" }}- end {{ "}}" }}

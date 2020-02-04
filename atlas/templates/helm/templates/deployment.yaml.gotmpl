@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}
@@ -23,12 +23,12 @@ spec:
       imagePullSecrets:
         {{ "{{" }}- toYaml . | nindent 8 {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
-      serviceAccountName: {{ "{{" }} include "chart.fullname" . {{ "}}" }}
       containers:
         - name: {{ "{{" }} .Chart.Name {{ "}}" }}
-          image: "{{ "{{" }} .Values.image.repository {{ "}}" }}:{{ "{{" }} .Values.image.tag {{ "}}" }}"
+          image: "{{ "{{" }} tpl .Values.image.repository . {{ "}}" }}:{{ "{{" }} .Values.image.tag {{ "}}" }}"
           imagePullPolicy: {{ "{{" }} .Values.image.pullPolicy {{ "}}" }}
           env:
+{{ if .WithDatabase }}
             - name: POSTGRES_USER
               value: {{ "{{" }} .Values.db.username {{ "}}" }}
             - name: POSTGRES_PASSWORD
@@ -46,6 +46,7 @@ spec:
               value: {{ "{{" }} .Values.db.username {{ "}}" }}
             - name: dsn
               value: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSLMODE)
+{{ end }}
           ports:
             - name: grpc
               containerPort: {{ "{{" }} .Values.app.grpcPort {{ "}}" }}
@@ -56,13 +57,13 @@ spec:
             - name: health
               containerPort: {{ "{{" }} .Values.healthPort {{ "}}" }}
           args: [
+{{ if .WithDatabase }}
             "--database.dsn=$(dsn)",
-            "--default.limit",
-            "{{ "{{" }} .Values.args.limit {{ "}}" }}"
+{{ end }}
           ]
           livenessProbe:
             httpGet:
-              path: /health
+              path: /healthz
               port: {{ "{{" }} .Values.healthPort {{ "}}" }}
               scheme: HTTP
             initialDelaySeconds: 3
