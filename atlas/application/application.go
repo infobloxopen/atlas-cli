@@ -124,7 +124,7 @@ func (app Application) GetDirectories() []string {
 			"db/fixtures",
 		)
 	}
-	if app.Helm != nil {
+	if app.WithHelm {
 		dirnames = append(dirnames,
 			app.Helm.GetDirs()...,
 		)
