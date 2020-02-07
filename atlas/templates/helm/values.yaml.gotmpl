@@ -8,8 +8,9 @@ grpcProtocol: TCP
 replicaCount: 1
 
 image:
-  repository: '{{ "{{" }} include "chart.name" . {{ "}}" }}'
+  name: {{ .Name }}
   tag: latest
+  registry: {{ if .Registry }}{{ .Registry }}/{{end}}
   pullPolicy: Always
 
 imagePullSecrets: []
@@ -22,15 +23,15 @@ service:
   httpPort: 8080
 
 ingress:
-  enabled: false
+  enabled: true
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: '{{ "{{" }} .Values.ingress.path {{ "}}" }}/{{ "{{" }} include "chart.fullname" . {{ "}}" }}/'
+    - host: "{{ "{{" }} .Values.env {{ "}}" }}.{{ "{{" }} .Values.zone {{ "}}" }}"
       paths:
-        - path: "/*"
-          name: '{{ "{{" }} include "chart.fullname" . {{ "}}" }}'
+        - path: "/{{ .Helm.GetName }}/v1/"
+          name: "{{ "{{" }} include \"chart.fullname\" . {{ "}}" }}"
           port: "{{ "{{" }} .Values.service.httpPort {{ "}}" }}"
 
   tls: []
@@ -61,13 +62,13 @@ postgres:
   enabled: true
 migration:
   name: migration
-  image: migration
+  image: infoblox/migrate
   version: v1.0.0
   imagePullPolicy: Always
 
 db:
   username: postgres
-  database: postgres
+  database: {{ .Helm.GetName }}
   sslMode: disable
   port: "5432"
 {{ end }}

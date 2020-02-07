@@ -1,12 +1,13 @@
 
 version: latest
 docker:
-  registry: https://index.docker.io/v1/
+  registry: {{ if .Registry }}{{ .Registry }}{{else}}https://index.docker.io/v1/{{end}}
   username: "{ Fill this in }"
   password: "{ Fill this in }"
 
 #### Values that will be populated from env vaues
-env: minikube
+env: "minikube"
+zone: "local"
 
 image:
   pullPolicy: IfNotPresent
@@ -18,7 +19,6 @@ db:
   password: postgres
 
 postgres:
-  enabled: true
   name: postgres
   image: postgres
   version: "10.5"
@@ -32,4 +32,4 @@ app:
   grpcPort: 9090
 
 secrets:
-  enabled: false
+  enabled: true

@@ -2,13 +2,13 @@
 kind: Pod
 metadata:
     namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
-    name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-service-migration
+    name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-migration
 spec:
   restartPolicy: OnFailure
   initContainers:
-  - name: migrations-{{ "{{" }} .Values.migration.version | default .Chart.Version {{ "}}" }}
-    image: {{ "{{" }} .Values.migration.image {{ "}}" }}:{{ "{{" }} .Values.migration.version | default .Chart.Version {{ "}}" }}
-    imagePullPolicy: {{ "{{" }} .Values.migration.imagePullPolicy {{ "}}" }}
+  - name: migration-source
+    image: {{ "{{" }} .Values.image.registry {{ "}}" }}{{ "{{" }} .Values.image.name {{ "}}" }}:{{ "{{" }} .Values.image.tag {{ "}}" }}
+    imagePullPolicy: {{ "{{" }} .Values.image.pullPolicy {{ "}}" }}
     volumeMounts:
     - mountPath: "/service-migrations"
       name: migrations
@@ -22,7 +22,7 @@ spec:
       image: {{ "{{" }} .Values.migration.image {{ "}}" }}:{{ "{{" }} .Values.migration.version {{ "}}" }}
       imagePullPolicy: {{ "{{" }} .Values.migration.imagePullPolicy {{ "}}" }}
       volumeMounts:
-      - mountPath: service-migrations
+      - mountPath: "/service-migrations"
         name: migrations
       env:
       - name: POSTGRES_USER
@@ -48,10 +48,10 @@ spec:
       - /migrate
       args:
       - "--source"
-      - "file:///service-migrations/migrations"
+      - "file://service-migrations"
       - "--database.dsn"
       - "$(dsn)"
-      - up
+      - "up"
   volumes:
   - name: migrations
     emptyDir: {}

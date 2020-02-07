@@ -25,7 +25,7 @@ spec:
     {{ "{{" }}- end {{ "}}" }}
       containers:
         - name: {{ "{{" }} .Chart.Name {{ "}}" }}
-          image: "{{ "{{" }} tpl .Values.image.repository . {{ "}}" }}:{{ "{{" }} .Values.image.tag {{ "}}" }}"
+          image: "{{ "{{" }} .Values.image.registry {{ "}}" }}{{ "{{" }} .Values.image.name {{ "}}" }}:{{ "{{" }} .Values.image.tag {{ "}}" }}"
           imagePullPolicy: {{ "{{" }} .Values.image.pullPolicy {{ "}}" }}
           env:
 {{ if .WithDatabase }}
@@ -43,7 +43,7 @@ spec:
             - name: POSTGRES_PORT
               value: {{ "{{" }} .Values.db.port | quote {{ "}}" }}
             - name: POSTGRES_DB
-              value: {{ "{{" }} .Values.db.username {{ "}}" }}
+              value: {{ "{{" }} .Values.db.database {{ "}}" }}
             - name: dsn
               value: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSLMODE)
 {{ end }}
