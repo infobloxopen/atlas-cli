@@ -141,9 +141,17 @@ atlas init-app -name=my-application -gateway -db -registry=infoblox -pubsub -hea
 
 ### Helm charts
 Helm charts allow you to configure the manifest and deploy it in the Kubernetes cluster.
-####Run in minikube
+#### Run in minikube
 For use helm in minikube you have to:
-- [Install](https://kubernetes.io/docs/tasks/tools/install-minikube/) minikube and run `minikube start`;
+- [Install](https://kubernetes.io/docs/tasks/tools/install-minikube/) minikube and run:
+```sh
+minikube start
+```
+This command will configure access to the cluster in the minikube;
+- Install Tiller in the cluster. After configuring access to the cluster, execute:
+```sh
+helm init
+```
 - Work with the Docker daemon locally. You might execute following command in terminal
 ```sh
 eval $(minikube docker-env)

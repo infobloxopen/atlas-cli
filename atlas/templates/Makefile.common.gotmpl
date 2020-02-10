@@ -138,7 +138,6 @@ helm-lint:
 
 .PHONY: helm-archive
 helm-archive:
-	$(HELM) init --client-only
 	$(HELM) package -d $(SRCROOT_ON_HOST) helm/$(CHART_NAME) --version $(CHART_VERSION)
 
 .PHONY: helm-properties
@@ -151,7 +150,6 @@ push-chart: helm-lint helm-archive helm-properties
 
 .PHONY: helm-install
 helm-install: docker
-	helm init
 	helm upgrade --install --set "image.tag=$(IMAGE_VERSION)" --devel --namespace {{ .Helm.GetName }} -f ./helm/{{ .Helm.GetName }}/minikube-values.yaml {{ .Helm.GetName }} ./helm/{{ .Helm.GetName }}/
 	# You have to add host name minikube.local to hosts file. This is necessary to communicate with your app in minikube.
 	# You might execute command in terminal:
