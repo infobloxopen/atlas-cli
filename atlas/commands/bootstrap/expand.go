@@ -15,21 +15,21 @@ import (
 )
 
 type finalTemplate struct {
-	AppName string
+	AppName      string
 	WithDatabase bool
-	R []templateResource
+	R            []templateResource
 }
 
 type templateResource struct {
-	NameCamel string
-	NameCamels string
-	NameLowerCamel string
+	NameCamel       string
+	NameCamels      string
+	NameLowerCamel  string
 	NameLowerCamels string
-	NameSnake string
-	NameSnakes string
-	MigrateVer string
-	Path string
-	WithDatabase bool
+	NameSnake       string
+	NameSnakes      string
+	MigrateVer      string
+	Path            string
+	WithDatabase    bool
 }
 
 func expandResource(appName, expandName string, withDatabase bool) error {
@@ -46,15 +46,15 @@ func expandResource(appName, expandName string, withDatabase bool) error {
 
 	for _, name := range lines {
 		migrateStr = fmt.Sprintf("%05d", migrateNum)
-		resource := templateResource {
-			NameCamel: strcase.ToCamel(name),
-			NameCamels: strPlural(strcase.ToCamel(name)),
-			NameLowerCamel: strcase.ToLowerCamel(name),
+		resource := templateResource{
+			NameCamel:       strcase.ToCamel(name),
+			NameCamels:      strPlural(strcase.ToCamel(name)),
+			NameLowerCamel:  strcase.ToLowerCamel(name),
 			NameLowerCamels: strPlural(strcase.ToLowerCamel(name)),
-			NameSnake: strcase.ToSnake(name),
-			NameSnakes: strPlural(strcase.ToSnake(name)),
-			MigrateVer: migrateStr,
-			WithDatabase: withDatabase,
+			NameSnake:       strcase.ToSnake(name),
+			NameSnakes:      strPlural(strcase.ToSnake(name)),
+			MigrateVer:      migrateStr,
+			WithDatabase:    withDatabase,
 		}
 		r = append(r, resource)
 		migrateNum += 1
@@ -62,15 +62,15 @@ func expandResource(appName, expandName string, withDatabase bool) error {
 
 	err = runTemplate(r, appName, withDatabase,
 		"../atlas/templates/pkg/pb/template.proto.gotmpl",
-		"pkg/pb/" + appName + ".proto" )
+		"pkg/pb/"+appName+".proto")
 
 	if err != nil {
-		log.Fatalf("failed to create pkg/pb/" + appName + ".proto\n%s\n", err)
+		log.Fatalf("failed to create pkg/pb/"+appName+".proto\n%s\n", err)
 	}
 
 	err = runTemplate(r, appName, withDatabase,
 		"../atlas/templates/pkg/svc/servers.gotmpl",
-		"pkg/svc/servers.go" )
+		"pkg/svc/servers.go")
 
 	if err != nil {
 		log.Fatalf("failed to create pkg/pb/servers.go\n%s\n", err)
@@ -78,7 +78,7 @@ func expandResource(appName, expandName string, withDatabase bool) error {
 
 	err = runTemplate(r, appName, withDatabase,
 		"../atlas/templates/cmd/server/endpoints.gotmpl",
-		"cmd/server/endpoints.go" )
+		"cmd/server/endpoints.go")
 
 	if err != nil {
 		log.Fatalf("failed to create cmd/server/endpoints.go\n%s\n", err)
@@ -86,7 +86,7 @@ func expandResource(appName, expandName string, withDatabase bool) error {
 
 	err = runTemplate(r, appName, withDatabase,
 		"../atlas/templates/cmd/server/servers.gotmpl",
-		"cmd/server/servers.go" )
+		"cmd/server/servers.go")
 
 	if err != nil {
 		log.Fatalf("failed to create cmd/server/servers.go\n%s\n", err)
@@ -94,21 +94,21 @@ func expandResource(appName, expandName string, withDatabase bool) error {
 
 	os.MkdirAll("db/migration", os.ModePerm)
 
-	for _ , res := range r {
+	for _, res := range r {
 		err = runTemplate([]templateResource{res}, appName, withDatabase,
 			"../atlas/templates/db/migration/down.sql.gotmpl",
-			"db/migration/" + res.MigrateVer + "_" + res.NameSnakes +  ".down.sql" )
+			"db/migration/"+res.MigrateVer+"_"+res.NameSnakes+".down.sql")
 
 		if err != nil {
-			log.Fatalf("failed to create db/migration/" + res.MigrateVer + "_" + res.NameSnakes +  ".down.sql\n%s\n", err)
+			log.Fatalf("failed to create db/migration/"+res.MigrateVer+"_"+res.NameSnakes+".down.sql\n%s\n", err)
 		}
 
 		err = runTemplate([]templateResource{res}, appName, withDatabase,
 			"../atlas/templates/db/migration/up.sql.gotmpl",
-			"db/migration/" + res.MigrateVer + "_" + res.NameSnakes +  ".up.sql" )
+			"db/migration/"+res.MigrateVer+"_"+res.NameSnakes+".up.sql")
 
 		if err != nil {
-			log.Fatalf("failed to create db/migration/" + res.MigrateVer + "_" + res.NameSnakes +  ".up.sql\n%s\n", err)
+			log.Fatalf("failed to create db/migration/"+res.MigrateVer+"_"+res.NameSnakes+".up.sql\n%s\n", err)
 		}
 	}
 
@@ -168,8 +168,7 @@ func strPlural(s string) string {
 	}
 }
 
-
-func runTemplate(r []templateResource, appName string, expandName bool, src string, dst string ) error {
+func runTemplate(r []templateResource, appName string, expandName bool, src string, dst string) error {
 	// Create a new template and parse the file into it
 	name := path.Base(src)
 	t, err := template.New(name).ParseFiles(src)
@@ -181,7 +180,7 @@ func runTemplate(r []templateResource, appName string, expandName bool, src stri
 	if err != nil {
 		log.Fatalf("create file %s failed: %s\n", dst, err)
 	}
-	q := finalTemplate{appName, expandName,r}
+	q := finalTemplate{appName, expandName, r}
 	err = t.Execute(f, q)
 	if err != nil {
 		log.Fatalf("failed executing template: %s\n", err)

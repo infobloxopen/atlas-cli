@@ -1,0 +1,80 @@
+# Default values for {{ .Helm.GetName }}.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+{{ if .WithHealth }}healthPort: 8081{{ end }}
+httpProtocol: TCP
+grpcProtocol: TCP
+replicaCount: 1
+
+image:
+  name: {{ .Name }}
+  tag: latest
+  registry: {{ if .Registry }}{{ .Registry }}/{{end}}
+  pullPolicy: Always
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  grpcPort: 9090
+  httpPort: 8080
+
+ingress:
+  enabled: true
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: "{{ "{{" }} .Values.env {{ "}}" }}.{{ "{{" }} .Values.zone {{ "}}" }}"
+      paths:
+        - path: "/{{ .Helm.GetName }}/v1/"
+          name: "{{ "{{" }} include \"chart.fullname\" . {{ "}}" }}"
+          port: "{{ "{{" }} .Values.service.httpPort {{ "}}" }}"
+
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+{{ if .WithDatabase }}
+postgres:
+  enabled: true
+migration:
+  name: migration
+  image: infoblox/migrate
+  version: v1.0.0
+  imagePullPolicy: Always
+
+db:
+  username: postgres
+  database: {{ .Helm.GetName }}
+  sslMode: disable
+  port: "5432"
+{{ end }}
+
+app:
+  serviceName: {{ .Helm.GetName }}
+
+authURL:
+  "{ Fill this in }"
