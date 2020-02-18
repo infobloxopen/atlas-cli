@@ -35,6 +35,8 @@ PROTOBUF_ARGS += --validate_out="lang=go:."
 WITH_DATABASE ?= false
 WITH_GATEWAY  ?= false
 
+GO_MOD = go.mod
+
 
 ifeq ($(WITH_DATABASE), true)
 PROTOBUF_ARGS += --gorm_out=.
@@ -91,11 +93,9 @@ protobuf-atlas:
 
 .PHONY vendor: vendor-atlas
 vendor-atlas:
-	@dep ensure -vendor-only
-
-.PHONY vendor-update: vendor-update-atlas
-vendor-update-atlas:
-	@dep ensure
+	@go mod tidy
+	@go mod vendor
+	@go mod download
 
 .PHONY clean: clean-atlas
 clean-atlas:
