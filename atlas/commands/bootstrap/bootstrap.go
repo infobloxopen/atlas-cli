@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/infobloxopen/atlas-cli/atlas/application"
+	"github.com/infobloxopen/atlas-cli/atlas/application/helm"
 	"github.com/infobloxopen/atlas-cli/atlas/utill"
 	"go/build"
 	"golang.org/x/tools/imports"
@@ -27,7 +28,8 @@ const (
 	flagWithDatabase = "db"
 	flagWithHealth   = "health"
 	flagWithPubsub   = "pubsub"
-	flagExpandName 	 = "expand"
+	flagWithHelm     = "helm"
+	flagExpandName   = "expand"
 )
 
 var (
@@ -40,6 +42,7 @@ var (
 	initializeDatabase = initialize.Bool(flagWithDatabase, false, "initialize the application with database folders")
 	initializeHealth   = initialize.Bool(flagWithHealth, false, "initialize the application with internal health checks")
 	initializePubsub   = initialize.Bool(flagWithPubsub, false, "initialize the application with a pubsub example")
+	initializeHelm     = initialize.Bool(flagWithHelm, false, "initialize the application with the helm charts")
 	initializeExpand   = initialize.String(flagExpandName, "", "the name of the input file for the `expand` command (optional)")
 )
 
@@ -73,7 +76,12 @@ func (b Bootstrap) Run() error {
 		WithDatabase: *initializeDatabase,
 		WithHealth:   *initializeHealth,
 		WithPubsub:   *initializePubsub,
+		WithHelm:     *initializeHelm,
 		ExpandName:   *initializeExpand,
+	}
+
+	if app.WithHelm {
+		app.Helm = helm.New(app.Name)
 	}
 
 	if err := app.Initialize(); err != nil {
@@ -84,8 +92,8 @@ func (b Bootstrap) Run() error {
 		if err := expandResource(app.Name, app.ExpandName, app.WithDatabase); err != nil {
 			return err
 		}
-		if err := CombineFiles("pkg/pb/service.proto", "pkg/pb/" + app.Name + ".proto"); err != nil {
-				return err
+		if err := CombineFiles("pkg/pb/service.proto", "pkg/pb/"+app.Name+".proto"); err != nil {
+			return err
 		}
 		if err := CombineFiles("pkg/svc/zserver.go", "pkg/svc/servers.go"); err != nil {
 			return err

@@ -32,7 +32,8 @@ Bootstrapped applications use [golang-migrate](https://github.com/golang-migrate
 
 ```
 $ go get -u -d github.com/golang-migrate/migrate/cli github.com/lib/pq
-$ go build -tags 'postgres' -o /usr/local/bin/migrate github.com/golang-migrate/migrate/v4/cli
+$ apt install libc6-dev    #it is necessary for a successful build
+$ go build -tags 'postgres' -o /usr/local/bin/migrate github.com/golang-migrate/migrate/cli
 ```
 See the official golang-migrate [GitHub repository](https://github.com/golang-migrate/migrate) for more information about this tool.
 
@@ -68,6 +69,7 @@ Here's the full set of flags for the `init-app` command.
 | `health`      | Initialize the application with internal health checks              | No            | `false`       |
 | `pubsub`      | Initialize the application with a atlas-pubsub example              | No            | `false`       |
 | `registry`    | The Docker registry where application images are pushed             | No            | `""`          |
+| `helm`        | Initialize the application with helm charts                         | No            | `false`       |
 | `expand`      | Initialize the application with additional services based on a file | No            | `""`          |
 
 You can run `atlas init-app --help` to see these flags and their descriptions on the command-line.
@@ -137,6 +139,42 @@ Of course, you may include all the flags in the `init-app` command.
 atlas init-app -name=my-application -gateway -db -registry=infoblox -pubsub -health
 ```
 
+### Helm charts
+Helm charts allow you to configure the manifest and deploy it in the Kubernetes cluster.
+#### Run in minikube
+For use helm in minikube you have to:
+- [Install](https://kubernetes.io/docs/tasks/tools/install-minikube/) minikube and run:
+```sh
+minikube start
+```
+This command will configure access to the cluster in the minikube;
+- Install Tiller in the cluster. After configuring access to the cluster, execute:
+```sh
+helm init
+```
+- Work with the Docker daemon locally. You might execute following command in terminal
+```sh
+eval $(minikube docker-env)
+```
+- Add host name `minikube.local` to hosts file. You might execute command in terminal
+```sh
+echo "$(minikube ip) minikube.local" > /etc/hosts
+ ```
+ or
+ ```sh
+ echo "$(minikube ip) minikube.local" | sudo tee -a /etc/hosts
+ ```
+ 
+ After that you can run targets from Makefile
+```sh
+make helm-install # to install your app in minikube
+make helm-delete  # to delete your app from minikube
+```
+and get access to API through `minikube.local`. For example
+```sh
+curl minikube.local/NAME_YOUR_APP/v1/version
+```
+ 
 ## Viper Configuration
 
 Generated atlas projects use [viper](https://github.com/spf13/viper), a complete configuration solution that allows an application to run from different environments. Viper also provides precedence order which is in the order as below.

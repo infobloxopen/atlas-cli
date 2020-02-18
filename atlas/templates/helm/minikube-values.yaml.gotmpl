@@ -1,0 +1,35 @@
+
+version: latest
+docker:
+  registry: {{ if .Registry }}{{ .Registry }}{{else}}https://index.docker.io/v1/{{end}}
+  username: "{ Fill this in }"
+  password: "{ Fill this in }"
+
+#### Values that will be populated from env vaues
+env: "minikube"
+zone: "local"
+
+image:
+  pullPolicy: IfNotPresent
+
+{{ if .WithDatabase }}
+db:
+  username: postgres
+  server: "{{ "{{" }} include \"chart.fullname\" . {{ "}}" }}-postgres.{{ "{{" }} .Release.Namespace {{ "}}" }}"
+  password: postgres
+
+postgres:
+  name: postgres
+  image: postgres
+  version: "10.5"
+  imagePullPolicy: IfNotPresent
+  port: "5432"
+{{ end }}
+
+app:
+  namespace: "{{ .Helm.GetName }}-{{ "{{" }} .Values.env {{ "}}" }}"
+  httpPort: 8080
+  grpcPort: 9090
+
+secrets:
+  enabled: true
