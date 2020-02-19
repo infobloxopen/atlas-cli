@@ -66,6 +66,13 @@ const (
 
 	// Logging
 	defaultLoggingLevel = "debug"
+
+	{{ if .WithProfiler }}
+	//Profiler
+	defaultProfilerEnabled = false
+	defaultProfilerAddress = "0.0.0.0"
+	defaultProfilerPort    = "9999"
+	{{ end }}
 )
 
 var (
@@ -122,4 +129,10 @@ var (
 	flagApplicationID   = pflag.String("app.id", defaultApplicationID, "identifier for the application")
 
 	flagLoggingLevel = pflag.String("logging.level", defaultLoggingLevel, "log level of application")
+
+	{{ if .WithProfiler }}
+	flagProfilerEnabled = pflag.Bool("profiler.enable", defaultProfilerEnabled, "enable profiler by default false")
+	flagProfilerAddress = pflag.String("profiler.address", defaultProfilerAddress, "address of profiler server")
+	flagProfilerPort    = pflag.String("profiler.port", defaultProfilerPort, "port of profiler server")
+	{{ end }}
 )
