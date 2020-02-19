@@ -1,0 +1,23 @@
+package main
+
+import (
+	_ "net/http/pprof"
+)
+
+const (
+	//Profiler
+	defaultProfilerEnabled = false
+	defaultProfilerAddress = "0.0.0.0"
+	defaultProfilerPort    = "9999"
+)
+
+var (
+	flagProfilerEnabled = pflag.Bool("profiler.enable", defaultProfilerEnabled, "enable profiler by default false")
+	flagProfilerAddress = pflag.String("profiler.address", defaultProfilerAddress, "address of profiler server")
+	flagProfilerPort    = pflag.String("profiler.port", defaultProfilerPort, "port of profiler server")
+)
+
+func ServeProfiler(logger *logrus.Logger) error {
+	logger.Infof("Server profiler on %s:%s", viper.GetString("profiler.address"), viper.GetString("profiler.port"))
+	return http.ListenAndServe(fmt.Sprintf("%s:%s", viper.GetString("profiler.address"), viper.GetString("profiler.port")), nil)
+}

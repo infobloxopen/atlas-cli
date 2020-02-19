@@ -31,6 +31,14 @@ func main() {
 
 	go func() { doneC <- ServeExternal(logger) }()
 
+	{{ if .WithProfiler }}if viper.GetBool("profiler.enable") {
+		go func() {
+			if err := ServeProfiler(logger); err != nil {
+				logger.Fatal(err)
+			}
+		}()
+	}{{ end }}
+
 	{{ if .WithPubsub}}if viper.GetBool("atlas.pubsub.enable") {
 		InitSubscriber(logger)
 	}{{ end }}

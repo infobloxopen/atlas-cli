@@ -3,12 +3,13 @@ package application
 import (
 	"errors"
 	"fmt"
-	"github.com/infobloxopen/atlas-cli/atlas/application/helm"
-	"github.com/infobloxopen/atlas-cli/atlas/templates"
-	"github.com/infobloxopen/atlas-cli/atlas/utill"
 	"os"
 	"strings"
 	"text/template"
+
+	"github.com/infobloxopen/atlas-cli/atlas/application/helm"
+	"github.com/infobloxopen/atlas-cli/atlas/templates"
+	"github.com/infobloxopen/atlas-cli/atlas/utill"
 )
 
 // Application models the data that the templates need to render files
@@ -21,6 +22,7 @@ type Application struct {
 	WithHealth   bool
 	WithPubsub   bool
 	WithHelm     bool
+	WithProfiler bool
 	Helm         *helm.Helm
 	ExpandName   string
 }
@@ -86,6 +88,9 @@ func (app Application) initializeFiles() error {
 	}
 	if app.Helm != nil {
 		fileInitializers = append(fileInitializers, Application.generateHelmCharts)
+	}
+	if app.WithProfiler {
+		fileInitializers = append(fileInitializers, Application.generateServerProfiler)
 	}
 
 	for _, initializer := range fileInitializers {
@@ -201,6 +206,10 @@ func (app Application) generateProto() error {
 
 func (app Application) generateServerMain() error {
 	return app.generateFile("cmd/server/main.go", "templates/cmd/server/main.go.gotmpl")
+}
+
+func (app Application) generateServerProfiler() error {
+	return app.generateFile("cmd/server/profiler.go", "templates/cmd/server/profiler.go.gotmpl")
 }
 
 func (app Application) generateServerGrpc() error {
