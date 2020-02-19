@@ -34,6 +34,19 @@ until finished
 
 End with an example of getting some data out of the system or using it for a little demo.
 
+{{ if .WithProfiler }}
+### Profiling
+Run your app with `--profiler.enable` option and specify `--profiler.address` with `--profiler.port` if need 
+
+This option will enable [net/http/pprof](https://golang.org/pkg/net/http/pprof/) package and allows you to use `pprof` tool to optimize your code. Also it will enable pprof web interface with `address:port/debug/pprof` endpoint 
+
+Here is useful links for mentioned tools:
+
+- [golang.org](https://github.com/google/pprof)
+- [github](https://golang.org/pkg/net/http/pprof/)
+- [medium](https://medium.com/better-programming/profiling-a-golang-grpc-server-using-pprof-b6de1371fdd)
+{{ end }}
+
 ## Deployment
 
 Add additional notes about how to deploy this application. Maybe list some common pitfalls or debugging strategies.
