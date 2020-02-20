@@ -4,16 +4,17 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/infobloxopen/atlas-cli/atlas/application"
-	"github.com/infobloxopen/atlas-cli/atlas/application/helm"
-	"github.com/infobloxopen/atlas-cli/atlas/utill"
 	"go/build"
-	"golang.org/x/tools/imports"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/infobloxopen/atlas-cli/atlas/application"
+	"github.com/infobloxopen/atlas-cli/atlas/application/helm"
+	"github.com/infobloxopen/atlas-cli/atlas/utill"
+	"golang.org/x/tools/imports"
 )
 
 const (
@@ -28,6 +29,7 @@ const (
 	flagWithDatabase = "db"
 	flagWithHealth   = "health"
 	flagWithPubsub   = "pubsub"
+	flagWithProfiler = "profiler"
 	flagWithHelm     = "helm"
 	flagExpandName   = "expand"
 )
@@ -42,6 +44,7 @@ var (
 	initializeDatabase = initialize.Bool(flagWithDatabase, false, "initialize the application with database folders")
 	initializeHealth   = initialize.Bool(flagWithHealth, false, "initialize the application with internal health checks")
 	initializePubsub   = initialize.Bool(flagWithPubsub, false, "initialize the application with a pubsub example")
+	initializeProfiler = initialize.Bool(flagWithProfiler, false, "initialize the application with a profiling service")
 	initializeHelm     = initialize.Bool(flagWithHelm, false, "initialize the application with the helm charts")
 	initializeExpand   = initialize.String(flagExpandName, "", "the name of the input file for the `expand` command (optional)")
 )
@@ -76,6 +79,7 @@ func (b Bootstrap) Run() error {
 		WithDatabase: *initializeDatabase,
 		WithHealth:   *initializeHealth,
 		WithPubsub:   *initializePubsub,
+		WithProfiler: *initializeProfiler,
 		WithHelm:     *initializeHelm,
 		ExpandName:   *initializeExpand,
 	}
