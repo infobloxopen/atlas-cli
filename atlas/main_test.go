@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("failed to install atlas cli: %v", err)
 	}
 	log.Print("running init-app")
-	if out, err := exec.Command("atlas", "init-app", "-name=test", "-gateway", "-health", "-pubsub", "-debug").CombinedOutput(); err != nil {
+	if out, err := exec.Command("atlas", "init-app", "-name=test", "-gateway", "-health", "-helm", "-pubsub", "-debug").CombinedOutput(); err != nil {
 		log.Print(string(out))
 		log.Fatalf("failed to run atlas init-app: %v", err)
 	}
@@ -91,5 +91,14 @@ func TestFormatting(t *testing.T) {
 		// print unformatted files on a single line, not multiple lines
 		files := strings.Split(string(out), "\n")
 		t.Fatalf("test application has unformatted go code: %v", strings.Join(files, " "))
+	}
+}
+
+func TestHelmLint(t *testing.T) {
+	cmd := exec.Command("helm", "lint", "helm/test")
+	cmd.Dir = "./test"
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("helm lint failed: %v\n%s", err, string(out))
 	}
 }
