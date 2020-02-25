@@ -15,5 +15,5 @@ templating: .bindata
 test:
 	@go test -v ./...
 
-test-with-integration:
+test-with-integration: templating
 	@export e2e=true && go test -v ./...
