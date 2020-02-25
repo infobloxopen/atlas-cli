@@ -57,7 +57,7 @@ tolerations: []
 
 affinity: {}
 
-{{ if .WithDatabase }}
+{{- if .WithDatabase }}
 postgres:
   enabled: true
 migration:
@@ -71,7 +71,10 @@ db:
   database: {{ .Helm.GetName }}
   sslMode: disable
   port: "5432"
-{{ end }}
+
+secrets:
+  enabled: true
+{{- end }}
 
 app:
   serviceName: {{ .Helm.GetName }}
