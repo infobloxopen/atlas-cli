@@ -67,6 +67,7 @@ Here's the full set of flags for the `init-app` command.
 | `db`          | Bootstrap the application with PostgreSQL database integration      | No            | `false`       |
 | `gateway`     | Initialize the application with a gRPC gateway                      | No            | `false`       |
 | `health`      | Initialize the application with internal health checks              | No            | `false`       |
+| `metrics`     | Initialize the application with gRPC Prometheus metrics             | No            | `true`        |
 | `pubsub`      | Initialize the application with a atlas-pubsub example              | No            | `false`       |
 | `registry`    | The Docker registry where application images are pushed             | No            | `""`          |
 | `helm`        | Initialize the application with helm charts                         | No            | `false`       |

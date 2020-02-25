@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-{{ if .WithHealth }}healthPort: 8081{{ end }}
+{{ if or .WithHealth .WithMetrics }}internalPort: 8081{{ end }}
 httpProtocol: TCP
 grpcProtocol: TCP
 replicaCount: 1

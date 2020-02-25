@@ -53,7 +53,7 @@ const (
 	defaultTaggingPort    = "5555"
 
 	// Health
-	defaultInternalEnable    = {{ if .WithHealth }}true{{ else }}false{{ end }}
+	defaultInternalEnable    = {{ if or .WithHealth .WithMetrics }}true{{ else }}false{{ end }}
 	defaultInternalAddress   = "0.0.0.0"
 	defaultInternalPort      = "8081"
 	defaultInternalHealth    = "/healthz"
