@@ -12,6 +12,13 @@ import (
 	"time"
 )
 
+func e2eTeardown() {
+	log.Print("cleaning up bootstrapped files")
+	if err := os.RemoveAll("test"); err != nil {
+		log.Fatalf("failed to delete test folder: %v", err)
+	}
+}
+
 func TestMain(m *testing.M) {
 	if len(os.Getenv("e2e")) == 0 {
 		log.Print("skipping end-to-end tests")
@@ -31,12 +38,7 @@ func TestMain(m *testing.M) {
 		log.Print(string(out))
 		log.Fatalf("failed to run atlas init-app: %v", err)
 	}
-	defer func() {
-		log.Print("cleaning up bootstrapped files")
-		if err := os.RemoveAll("test"); err != nil {
-			log.Fatalf("failed to delete test folder: %v", err)
-		}
-	}()
+	defer e2eTeardown()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -62,7 +64,10 @@ func TestMain(m *testing.M) {
 	log.Print("wait for servers to load up")
 	time.Sleep(time.Second)
 
-	m.Run()
+	code := m.Run()
+	// os.Exit() does not respect defer statements
+	e2eTeardown()
+	os.Exit(code)
 }
 
 func TestGetVersion(t *testing.T) {
