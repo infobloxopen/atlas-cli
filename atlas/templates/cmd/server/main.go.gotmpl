@@ -8,6 +8,10 @@ import (
 	{{ if .WithGateway }}"github.com/golang/protobuf/proto"{{ end }}
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
+	{{- if .WithMetrics }}
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	{{- end }}
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -25,7 +29,7 @@ func main() {
 	doneC := make(chan error)
 	logger := NewLogger()
 
-	{{ if .WithHealth}}if viper.GetBool("internal.enable") {
+	{{ if or .WithHealth .WithMetrics }}if viper.GetBool("internal.enable") {
 		go func() { doneC <- ServeInternal(logger) }()
 	}{{ end }}
 
@@ -70,9 +74,10 @@ func NewLogger() *logrus.Logger {
 
 	return logger
 }
-{{ if .WithHealth }}
+{{ if or .WithHealth .WithMetrics }}
 // ServeInternal builds and runs the server that listens on InternalAddress
 func ServeInternal(logger *logrus.Logger) error {
+	{{- if .WithHealth }}
 	healthChecker := health.NewChecksHandler(
 		viper.GetString("internal.health"),
 		viper.GetString("internal.readiness"),
@@ -81,8 +86,10 @@ func ServeInternal(logger *logrus.Logger) error {
 	healthChecker.AddLiveness("ping", health.HTTPGetCheck(
 		fmt.Sprint("http://", viper.GetString("internal.address"), ":", viper.GetString("internal.port"), "/ping"), time.Minute),
 	)
+	{{- end }}
 
 	s, err := server.NewServer(
+		{{- if .WithHealth }}
 		// register our health checks
 		server.WithHealthChecks(healthChecker),
 		// this endpoint will be used for our health checks
@@ -90,6 +97,11 @@ func ServeInternal(logger *logrus.Logger) error {
 			w.WriteHeader(200)
 			w.Write([]byte("pong"))
 		})),
+		{{- end }}
+		{{- if .WithMetrics }}
+		// register metrics
+		server.WithHandler("/metrics", promhttp.Handler()),
+		{{- end }}
 	)
 	if err != nil {
 		return err
@@ -113,6 +125,10 @@ func ServeExternal(logger *logrus.Logger) error {
 	if err != nil {
 		logger.Fatalln(err)
 	}
+
+	{{- if .WithMetrics }}
+	grpc_prometheus.Register(grpcServer)
+	{{- end }}
 
 	s, err := server.NewServer(
 		server.WithGrpcServer(grpcServer),

@@ -3,6 +3,9 @@ package main
 import (
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
+	{{- if .WithMetrics }}
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	{{- end }}
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/sirupsen/logrus"
@@ -27,6 +30,11 @@ func NewGRPCServer(logger *logrus.Logger{{ if .WithDatabase }}, dbConnectionStri
 
 			// Request-Id interceptor
 			requestid.UnaryServerInterceptor(),
+
+			{{ if .WithMetrics }}
+			// Metrics middleware
+			grpc_prometheus.UnaryServerInterceptor,
+			{{- end }}
 
 			// validation middleware
 			grpc_validator.UnaryServerInterceptor(),

@@ -20,6 +20,7 @@ type Application struct {
 	WithGateway  bool
 	WithDatabase bool
 	WithHealth   bool
+	WithMetrics  bool
 	WithPubsub   bool
 	WithHelm     bool
 	WithProfiler bool

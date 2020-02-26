@@ -28,6 +28,7 @@ const (
 	flagWithDebug    = "debug"
 	flagWithDatabase = "db"
 	flagWithHealth   = "health"
+	flagWithMetrics  = "metrics"
 	flagWithPubsub   = "pubsub"
 	flagWithProfiler = "profiler"
 	flagWithHelm     = "helm"
@@ -43,6 +44,7 @@ var (
 	initializeDebug    = initialize.Bool(flagWithDebug, false, "print debug statements during intialization (default false)")
 	initializeDatabase = initialize.Bool(flagWithDatabase, false, "initialize the application with database folders")
 	initializeHealth   = initialize.Bool(flagWithHealth, false, "initialize the application with internal health checks")
+	initializeMetrics  = initialize.Bool(flagWithMetrics, true, "initialize the application with gRPC Prometheus metrics")
 	initializePubsub   = initialize.Bool(flagWithPubsub, false, "initialize the application with a pubsub example")
 	initializeProfiler = initialize.Bool(flagWithProfiler, false, "initialize the application with a profiling service")
 	initializeHelm     = initialize.Bool(flagWithHelm, false, "initialize the application with the helm charts")
@@ -78,6 +80,7 @@ func (b Bootstrap) Run() error {
 		WithGateway:  *initializeGateway,
 		WithDatabase: *initializeDatabase,
 		WithHealth:   *initializeHealth,
+		WithMetrics:  *initializeMetrics,
 		WithPubsub:   *initializePubsub,
 		WithProfiler: *initializeProfiler,
 		WithHelm:     *initializeHelm,

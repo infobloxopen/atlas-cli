@@ -14,6 +14,11 @@ spec:
       app.kubernetes.io/instance: {{ "{{" }} .Release.Name {{ "}}" }}
   template:
     metadata:
+{{- if .WithMetrics }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ "{{" }} .Values.internalPort | quote {{ "}}" }}
+{{- end }}
       labels:
         app: {{ "{{" }} include "chart.fullname" . {{ "}}" }}
         app.kubernetes.io/name: {{ "{{" }} include "chart.name" . {{ "}}" }}
@@ -54,8 +59,8 @@ spec:
             - name: http
               containerPort: {{ "{{" }} .Values.app.httpPort {{ "}}" }}
               protocol: {{ "{{" }} .Values.httpProtocol {{ "}}" }}
-            - name: health
-              containerPort: {{ "{{" }} .Values.healthPort {{ "}}" }}
+            - name: internal
+              containerPort: {{ "{{" }} .Values.internalPort {{ "}}" }}
           args: [
 {{ if .WithDatabase }}
             "--database.dsn=$(dsn)",
@@ -64,14 +69,14 @@ spec:
           livenessProbe:
             httpGet:
               path: /healthz
-              port: {{ "{{" }} .Values.healthPort {{ "}}" }}
+              port: {{ "{{" }} .Values.internalPort {{ "}}" }}
               scheme: HTTP
             initialDelaySeconds: 3
             timeoutSeconds: 10
           readinessProbe:
             httpGet:
               path: /ready
-              port: {{ "{{" }} .Values.healthPort {{ "}}" }}
+              port: {{ "{{" }} .Values.internalPort {{ "}}" }}
               scheme: HTTP
             initialDelaySeconds: 2
             periodSeconds: 5
