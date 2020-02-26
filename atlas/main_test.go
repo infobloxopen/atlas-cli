@@ -12,6 +12,13 @@ import (
 	"time"
 )
 
+func e2eTeardown() {
+	log.Print("cleaning up bootstrapped files")
+	if err := os.RemoveAll("test"); err != nil {
+		log.Fatalf("failed to delete test folder: %v", err)
+	}
+}
+
 func TestMain(m *testing.M) {
 	if len(os.Getenv("e2e")) == 0 {
 		log.Print("skipping end-to-end tests")
@@ -27,16 +34,11 @@ func TestMain(m *testing.M) {
 		log.Fatalf("failed to install atlas cli: %v", err)
 	}
 	log.Print("running init-app")
-	if out, err := exec.Command("atlas", "init-app", "-name=test", "-gateway", "-health", "-pubsub", "-debug").CombinedOutput(); err != nil {
+	if out, err := exec.Command("atlas", "init-app", "-name=test", "-gateway", "-health", "-helm", "-pubsub", "-debug").CombinedOutput(); err != nil {
 		log.Print(string(out))
 		log.Fatalf("failed to run atlas init-app: %v", err)
 	}
-	defer func() {
-		log.Print("cleaning up bootstrapped files")
-		if err := os.RemoveAll("test"); err != nil {
-			log.Fatalf("failed to delete test folder: %v", err)
-		}
-	}()
+	defer e2eTeardown()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -62,7 +64,10 @@ func TestMain(m *testing.M) {
 	log.Print("wait for servers to load up")
 	time.Sleep(time.Second)
 
-	m.Run()
+	code := m.Run()
+	// os.Exit() does not respect defer statements
+	e2eTeardown()
+	os.Exit(code)
 }
 
 func TestGetVersion(t *testing.T) {
@@ -86,5 +91,14 @@ func TestFormatting(t *testing.T) {
 		// print unformatted files on a single line, not multiple lines
 		files := strings.Split(string(out), "\n")
 		t.Fatalf("test application has unformatted go code: %v", strings.Join(files, " "))
+	}
+}
+
+func TestHelmLint(t *testing.T) {
+	cmd := exec.Command("helm", "lint", "helm/test")
+	cmd.Dir = "./test"
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("helm lint failed: %v\n%s", err, string(out))
 	}
 }

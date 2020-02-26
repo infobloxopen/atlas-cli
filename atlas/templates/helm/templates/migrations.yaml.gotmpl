@@ -35,7 +35,7 @@ spec:
       - name: POSTGRES_DB
         value: {{ "{{" }} tpl .Values.db.database . {{ "}}" }}
       - name: POSTGRES_HOST
-        value: {{ "{{" }} tpl .Values.db.server . {{ "}}" }}
+        value: {{ "{{" }} tpl (.Values.db.server | required "must set db.server") . {{ "}}" }}
       - name: POSTGRES_PORT
         value: {{ "{{" }} .Values.db.port | quote {{ "}}" }}
       - name: POSTGRES_SSLMODE
