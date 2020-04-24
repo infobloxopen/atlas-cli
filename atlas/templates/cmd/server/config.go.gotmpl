@@ -132,8 +132,8 @@ var (
 	flagSecretFile      = pflag.String("config.secret.file", defaultSecretFile, "directory of the secrets configuration file")
 	flagApplicationID   = pflag.String("app.id", defaultApplicationID, "identifier for the application")
 
-	flagKeepaliveTime    = pflag.String("config.keepalive.time", defaultKeepaliveTime, "default value, in seconds, of the keepalive time")
-	flagKeepaliveTimeout = pflag.String("config.keepalive.timeout", defaultKeepaliveTimeout, "default value, in seconds, of the keepalive timeout")
+	flagKeepaliveTime    = pflag.Int("config.keepalive.time", defaultKeepaliveTime, "default value, in seconds, of the keepalive time")
+	flagKeepaliveTimeout = pflag.Int("config.keepalive.timeout", defaultKeepaliveTimeout, "default value, in seconds, of the keepalive timeout")
 
 	flagLoggingLevel = pflag.String("logging.level", defaultLoggingLevel, "log level of application")
 
