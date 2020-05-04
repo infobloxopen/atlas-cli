@@ -60,30 +60,28 @@ fmt-atlas:
 test-atlas: fmt-atlas
 	@go test $(GO_TEST_FLAGS) $(GO_PACKAGES)
 
-docker-atlas:
-	@docker build -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE):$(IMAGE_VERSION) .
+docker-atlas: .docker-$(IMAGE_NAME)-$(IMAGE_VERSION)
 	@docker image prune -f --filter label=stage=server-intermediate
 
 .docker-$(IMAGE_NAME)-$(IMAGE_VERSION):
-	$(MAKE) docker-atlas
+	@docker build -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE):$(IMAGE_VERSION) .
 	touch $@
 
 .PHONY: docker
 docker: .docker-$(IMAGE_NAME)-$(IMAGE_VERSION)
 
-push-atlas: docker
+push-atlas: push
+
+.push-$(IMAGE_NAME)-$(IMAGE_VERSION):
 ifndef IMAGE_REGISTRY
 	@(echo "Please set IMAGE_REGISTRY variable in Makefile.vars to use push command"; exit 1)
 else
 	@docker push $(SERVER_IMAGE):$(IMAGE_VERSION)
 endif
-
-.push-$(IMAGE_NAME)-$(IMAGE_VERSION):
-	$(MAKE) push-atlas
 	touch $@
 
 .PHONY: push
-push: .push-$(IMAGE_NAME)-$(IMAGE_VERSION)
+push: .docker-$(IMAGE_NAME)-$(IMAGE_VERSION) .push-$(IMAGE_NAME)-$(IMAGE_VERSION)
 
 .PHONY protobuf: protobuf-atlas
 protobuf-atlas:

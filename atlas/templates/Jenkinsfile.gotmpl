@@ -31,7 +31,7 @@ pipeline {
       steps {
         withDockerRegistry([credentialsId: "<insert-the-creds-id>", url: ""]) {
           dir("$DIRECTORY") {
-            sh "make docker push"
+            sh "make docker"
           }
         }
       }
@@ -43,7 +43,7 @@ pipeline {
       steps {
         withDockerRegistry([credentialsId: "<insert-the-creds-id>", url: ""]) {
           dir("$DIRECTORY") {
-            sh "make push IMAGE_VERSION=latest"
+            sh "make push"
           }
         }
       }
@@ -54,7 +54,7 @@ pipeline {
             dir ("${WORKSPACE}/${DIRECTORY}") {
                 withDockerRegistry([credentialsId: "<insert-the-creds-id>", url: ""]) {
                     withAWS(region:'<insert-the-region-id>', credentials:'<insert-the-creds-id>') {
-                        sh "IMAGE_VERSION=\$(IMAGE_VERSION)-j$BUILD_NUMBER make push-chart"
+                        sh "make push-chart"
                     }
                 }
                 archiveArtifacts artifacts: 'helm/$(CHART_NAME)-*.tgz'
