@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"bufio"
 	"fmt"
+	"github.com/infobloxopen/atlas-cli/atlas/templates"
 	"github.com/jinzhu/inflection"
 	"io"
 	"log"
@@ -61,7 +62,7 @@ func expandResource(appName, expandName string, withDatabase bool) error {
 	}
 
 	err = runTemplate(r, appName, withDatabase,
-		"../atlas/templates/pkg/pb/template.proto.gotmpl",
+		"templates/pkg/pb/template.proto.gotmpl",
 		"pkg/pb/"+appName+".proto")
 
 	if err != nil {
@@ -69,7 +70,7 @@ func expandResource(appName, expandName string, withDatabase bool) error {
 	}
 
 	err = runTemplate(r, appName, withDatabase,
-		"../atlas/templates/pkg/svc/servers.gotmpl",
+		"templates/pkg/svc/servers.gotmpl",
 		"pkg/svc/servers.go")
 
 	if err != nil {
@@ -77,7 +78,7 @@ func expandResource(appName, expandName string, withDatabase bool) error {
 	}
 
 	err = runTemplate(r, appName, withDatabase,
-		"../atlas/templates/cmd/server/endpoints.gotmpl",
+		"templates/cmd/server/endpoints.gotmpl",
 		"cmd/server/endpoints.go")
 
 	if err != nil {
@@ -85,7 +86,7 @@ func expandResource(appName, expandName string, withDatabase bool) error {
 	}
 
 	err = runTemplate(r, appName, withDatabase,
-		"../atlas/templates/cmd/server/servers.gotmpl",
+		"templates/cmd/server/servers.gotmpl",
 		"cmd/server/servers.go")
 
 	if err != nil {
@@ -96,7 +97,7 @@ func expandResource(appName, expandName string, withDatabase bool) error {
 
 	for _, res := range r {
 		err = runTemplate([]templateResource{res}, appName, withDatabase,
-			"../atlas/templates/db/migration/down.sql.gotmpl",
+			"templates/db/migration/down.sql.gotmpl",
 			"db/migration/"+res.MigrateVer+"_"+res.NameSnakes+".down.sql")
 
 		if err != nil {
@@ -104,7 +105,7 @@ func expandResource(appName, expandName string, withDatabase bool) error {
 		}
 
 		err = runTemplate([]templateResource{res}, appName, withDatabase,
-			"../atlas/templates/db/migration/up.sql.gotmpl",
+			"templates/db/migration/up.sql.gotmpl",
 			"db/migration/"+res.MigrateVer+"_"+res.NameSnakes+".up.sql")
 
 		if err != nil {
@@ -171,15 +172,23 @@ func strPlural(s string) string {
 func runTemplate(r []templateResource, appName string, expandName bool, src string, dst string) error {
 	// Create a new template and parse the file into it
 	name := path.Base(src)
-	t, err := template.New(name).ParseFiles(src)
+	t := template.New(name)
+	bytes, err := templates.Asset(src)
 	if err != nil {
 		log.Fatalf("parsing template: %s\n", err)
 	}
+	t, err = t.Parse(string(bytes))
+	if err != nil {
+		return err
+	}
+
 	// Create Template
 	f, err := os.Create(dst)
 	if err != nil {
 		log.Fatalf("create file %s failed: %s\n", dst, err)
 	}
+	defer f.Close()
+
 	q := finalTemplate{appName, expandName, r}
 	err = t.Execute(f, q)
 	if err != nil {
