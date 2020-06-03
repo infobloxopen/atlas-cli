@@ -8,7 +8,7 @@ go:
 
 env:
   global:
-    - HELM_VERSION="v2.16.7"
+    - HELM_VERSION="v2.14.3"
     - PATH="/tmp:$PATH"
 
 install:
