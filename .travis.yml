@@ -4,7 +4,7 @@ services:
   - docker
 
 go:
-  - "1.13.x"
+  - "1.14.x"
 
 env:
   global:
@@ -20,5 +20,4 @@ before_script:
   - /tmp/helm init --client-only
 
 script:
-  - go mod init
   - make test-with-integration
