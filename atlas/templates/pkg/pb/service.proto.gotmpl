@@ -4,7 +4,7 @@ package service;
 
 import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
-import "github.com/lyft/protoc-gen-validate/validate/validate.proto";
+import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
 import "protoc-gen-swagger/options/annotations.proto";{{ if or .ExpandName .WithDatabase }}
 import "github.com/infobloxopen/protoc-gen-gorm/options/gorm.proto";{{ end }}
 {{ if .ExpandName }}
