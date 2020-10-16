@@ -63,7 +63,7 @@ pipeline {
             dir ("${WORKSPACE}/${DIRECTORY}") {
                 withDockerRegistry([credentialsId: "<insert-the-creds-id>", url: ""]) {
                     withAWS(region:'<insert-the-region-id>', credentials:'<insert-the-creds-id>') {
-                        sh "IMAGE_VERSION=${env.IMAGE_VERSION} make push-chart"
+                        sh "make push-chart"
                     }
                 }
                 archiveArtifacts artifacts: 'helm/$(CHART_NAME)-*.tgz'
