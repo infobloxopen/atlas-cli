@@ -37,7 +37,7 @@ pipeline {
       steps {
         withDockerRegistry([credentialsId: "<insert-the-creds-id>", url: ""]) {
           dir("$DIRECTORY") {
-            // I believe the shell started by Jenkins should inherit the env vars defined above.
+            // The shell started by Jenkins should inherit the env vars defined above.
             // Since Makefile.common uses ?= to set GIT_COMMIT and IMAGE_VERSION, then the values
             // set above should override the defaults from Makefile.common.
             sh "make docker"
@@ -47,11 +47,13 @@ pipeline {
     }
     stage("Push") {
       when {
-        branch "master"
+        // This check will work regardless of whether the merge build runs off of the master
+        // or develop branches.
+        expression{ !isPrBuild() }
       }
       steps {
-        // Just guessin there that {{.Name}} will be the docker image name (sans tag)
-        // FYI - Due to immutable tags in Harbor, 'latest' cannot be used
+        // Just guessing here that {{.Name}} will be the docker image name (sans tag).
+        // FYI - Due to immutable tags in Harbor, the 'latest' tag cannot be used.
         signDockerImage({{ .Name }}, env.IMAGE_VERSION)
       }
     }
