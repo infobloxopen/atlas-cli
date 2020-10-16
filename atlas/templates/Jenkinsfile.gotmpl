@@ -1,3 +1,7 @@
+// The source for this library is https://github.com/Infoblox-CTO/jenkins.shared.library
+// The signDockerImage() method is defined in vars/signDockerImage.groovy
+@Library('jenkins.shared.library') _
+
 pipeline {
   agent {
     label 'ubuntu_docker_label'
@@ -11,6 +15,8 @@ pipeline {
   environment {
     GOPATH = "$WORKSPACE"
     DIRECTORY = "src/github.com/{{ if .Root }}{{ .Root }}/{{ end }}{{ .Name }}"
+    GIT_COMMIT = sh('git describe --dirty=-unsupported --always --tags --long || echo pre-commit').trim()
+    IMAGE_VERSION = "${GIT_COMMIT}-j${BUILD_NUMBER}"
   }
   stages {
     stage("Lint") {
@@ -31,7 +37,10 @@ pipeline {
       steps {
         withDockerRegistry([credentialsId: "<insert-the-creds-id>", url: ""]) {
           dir("$DIRECTORY") {
-            sh "make docker push"
+            // I believe the shell started by Jenkins should inherit the env vars defined above.
+            // Since Makefile.common uses ?= to set GIT_COMMIT and IMAGE_VERSION, then the values
+            // set above should override the defaults from Makefile.common.
+            sh "make docker"
           }
         }
       }
@@ -41,11 +50,9 @@ pipeline {
         branch "master"
       }
       steps {
-        withDockerRegistry([credentialsId: "<insert-the-creds-id>", url: ""]) {
-          dir("$DIRECTORY") {
-            sh "make push IMAGE_VERSION=latest"
-          }
-        }
+        // Just guessin there that {{.Name}} will be the docker image name (sans tag)
+        // FYI - Due to immutable tags in Harbor, 'latest' cannot be used
+        signDockerImage({{ .Name }}, env.IMAGE_VERSION)
       }
     }
     {{ if .WithHelm }}
@@ -54,7 +61,7 @@ pipeline {
             dir ("${WORKSPACE}/${DIRECTORY}") {
                 withDockerRegistry([credentialsId: "<insert-the-creds-id>", url: ""]) {
                     withAWS(region:'<insert-the-region-id>', credentials:'<insert-the-creds-id>') {
-                        sh "IMAGE_VERSION=\$(IMAGE_VERSION)-j$BUILD_NUMBER make push-chart"
+                        sh "IMAGE_VERSION=${env.IMAGE_VERSION} make push-chart"
                     }
                 }
                 archiveArtifacts artifacts: 'helm/$(CHART_NAME)-*.tgz'
