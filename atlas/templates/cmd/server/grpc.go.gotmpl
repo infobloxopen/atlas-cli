@@ -10,6 +10,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"github.com/infobloxopen/atlas-app-toolkit/requestid"
 	{{ if .WithDatabase }}"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"{{ end }}
@@ -56,6 +57,8 @@ func NewGRPCServer(logger *logrus.Logger{{ if .WithDatabase }}, dbConnectionStri
 		return nil, err
 	}
 	pb.Register{{ .Name | Service }}Server(grpcServer, s)
+	// Register reflection service on gRPC server.
+	reflection.Register(grpcServer)
 
 	return grpcServer, nil
 }
