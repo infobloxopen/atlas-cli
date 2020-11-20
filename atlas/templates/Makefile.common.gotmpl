@@ -23,6 +23,7 @@ DOCKER_GENERATOR        ?= infoblox/atlas-gentool:latest
 GENERATOR               ?= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
 
 # configuration for building on host machine
+export GOFLAGS          ?= -mod=vendor
 GO_CACHE                ?= -pkgdir $(BUILD_PATH)/go-cache
 GO_BUILD_FLAGS          ?= $(GO_CACHE) -i -v
 GO_TEST_FLAGS           ?= -v -cover

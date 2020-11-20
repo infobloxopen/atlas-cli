@@ -4,7 +4,7 @@ LABEL stage=server-intermediate
 WORKDIR /go/src/{{ .Root }}/{{ .Name }}
 
 COPY . .
-RUN go build -o bin/server ./cmd/server
+RUN go build -mod=vendor -o bin/server ./cmd/server
 
 # copy the server binary from builder stage; run the server binary
 FROM alpine:latest AS runner
