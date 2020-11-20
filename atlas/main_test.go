@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
@@ -49,7 +50,7 @@ func TestMain(m *testing.M) {
 
 	output := "bin/server"
 	log.Printf("building server")
-	build := exec.Command("go", "build", "-o", output, "./cmd/server")
+	build := exec.Command("go", "build", "-mod", "vendor", "-o", output, "./cmd/server")
 	basePath := fmt.Sprintf("%s/test", dir)
 	build.Dir = basePath
 	//go build -o  ./test/bin/server ./test/cmd/server
@@ -58,10 +59,31 @@ func TestMain(m *testing.M) {
 		log.Fatalf("failed to build server: %v", err)
 	}
 	log.Printf("runnning server")
-	if err := exec.CommandContext(ctx, fmt.Sprintf("%s/%s", basePath, output)).Start(); err != nil {
+	cmd := exec.CommandContext(ctx, fmt.Sprintf("%s/%s", basePath, output))
+	stderr, _ := cmd.StderrPipe()
+	cmdLog := bufio.NewScanner(stderr)
+	ready := make(chan struct{}, 1)
+	go func() {
+		first := true
+		for cmdLog.Scan() {
+			line := cmdLog.Text()
+			if first && strings.Contains(line, "serving") {
+				ready <- struct{}{}
+				first = false
+			}
+			log.Print(line)
+		}
+	}()
+	if err := cmd.Start(); err != nil {
 		log.Fatalf("failed to start server: %v", err)
 	}
+	go func() {
+		if err := cmd.Wait(); err != nil {
+			log.Fatal()
+		}
+	}()
 	log.Print("wait for servers to load up")
+	<-ready
 	time.Sleep(time.Second)
 
 	code := m.Run()
