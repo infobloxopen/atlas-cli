@@ -1,5 +1,12 @@
 name: PR
-on: pull_request
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      make-flags:
+        description: additional flags to supply to make
+        required: false
+        default: DOCKER_GENERATOR=infoblox/atlas-gentool:latest
 jobs:
   test:
     name: Test with integration
@@ -36,4 +43,4 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-          make test-with-integration
+          make test-with-integration ${{ github.event.inputs.make-flags }}
