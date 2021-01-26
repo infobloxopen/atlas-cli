@@ -44,8 +44,8 @@ pipeline {
     }{{end}}
   }
   post {
-    always {
-        sh "make clean || true"
+    cleanup {
+      sh "make clean || true"
       cleanWs()
     }
   }
