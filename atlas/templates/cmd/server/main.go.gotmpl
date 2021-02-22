@@ -58,6 +58,7 @@ func NewLogger() *logrus.Logger {
 
 	// Set the log level on the default logger based on command line flag
 	logLevels := map[string]logrus.Level{
+		"trace":   logrus.TraceLevel,
 		"debug":   logrus.DebugLevel,
 		"info":    logrus.InfoLevel,
 		"warning": logrus.WarnLevel,
