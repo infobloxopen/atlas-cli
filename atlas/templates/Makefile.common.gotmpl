@@ -4,7 +4,7 @@
 PROJECT_ROOT            ?= $(PWD)
 BUILD_PATH              ?= bin
 DOCKERFILE_PATH         ?= $(CURDIR)/docker
-GO_IMAGE 								?= golang:1.14-alpine
+GO_IMAGE 								?= golang:alpine
 GO_RUNNER 							?= $(DOCKER_RUNNER) $(GO_IMAGE)
 
 # configuration for image names
@@ -28,7 +28,7 @@ GENERATOR               ?= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
 export GOFLAGS          ?= -mod=vendor
 GO_CACHE                ?= -pkgdir $(BUILD_PATH)/go-cache
 GO_BUILD_FLAGS          ?= $(GO_CACHE) -i -v
-GO_TEST_FLAGS           ?= -v -cover 
+GO_TEST_FLAGS           ?= -v -cover
 GO_PACKAGES             ?= $(shell go list ./... | grep -v vendor)
 
 
@@ -57,15 +57,15 @@ all-atlas: vendor-atlas protobuf-atlas docker-atlas
 
 .PHONY fmt: fmt-atlas
 fmt-atlas:
-	@$(GO_RUNNER) go fmt $(GO_PACKAGES)
+	$(GO_RUNNER) go fmt $(GO_PACKAGES)
 
 .PHONY test: test-atlas
 test-atlas: fmt-atlas
 	$(GO_RUNNER) go test $(GO_TEST_FLAGS) $(GO_PACKAGES)
 
 docker-atlas:
-	@docker build -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE):$(IMAGE_VERSION) .
-	@docker image prune -f --filter label=stage=server-intermediate
+	docker build --pull -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE):$(IMAGE_VERSION) .
+	docker image prune -f --filter label=stage=server-intermediate
 
 .docker-$(IMAGE_NAME)-$(IMAGE_VERSION):
 	$(MAKE) docker-atlas
@@ -78,7 +78,7 @@ push-atlas: docker
 ifndef IMAGE_REGISTRY
 	@(echo "Please set IMAGE_REGISTRY variable in Makefile.vars to use push command"; exit 1)
 else
-	@docker push $(SERVER_IMAGE):$(IMAGE_VERSION)
+	docker push $(SERVER_IMAGE):$(IMAGE_VERSION)
 endif
 
 .push-$(IMAGE_NAME)-$(IMAGE_VERSION):
@@ -90,25 +90,24 @@ push: .push-$(IMAGE_NAME)-$(IMAGE_VERSION)
 
 .PHONY protobuf: protobuf-atlas
 protobuf-atlas:
-	@$(GENERATOR) \
+	$(GENERATOR) \
 	$(PROTOBUF_ARGS) \
 	$(PROJECT_ROOT)/pkg/pb/service.proto
 
 .PHONY vendor: vendor-atlas
 vendor-atlas:
-	@go mod tidy
-	@go mod vendor
-	@go mod download
+	go mod tidy
+	go mod vendor
 
 .PHONY clean: clean-atlas
 clean-atlas:
-	@docker rmi -f $(shell docker images -q $(SERVER_IMAGE)) || true
+	docker rmi -f $(shell docker images -q $(SERVER_IMAGE)) || true
 	rm .push-* .docker-*
 
 .PHONY migrate-up: migrate-up-atlas
 migrate-up-atlas:
 ifeq ($(WITH_DATABASE), true)
-	@$(DOCKER_RUNNER) --net="host" $(MIGRATETOOL_IMAGE) --verbose --path=$(MIGRATION_PATH_IN_CONTAINER)/ --database.dsn=$(DATABASE_URL) up
+	$(DOCKER_RUNNER) --net="host" $(MIGRATETOOL_IMAGE) --verbose --path=$(MIGRATION_PATH_IN_CONTAINER)/ --database.dsn=$(DATABASE_URL) up
 else
 	@echo "Your application doesn't have database, migrations aren't supported"
 endif
@@ -116,7 +115,7 @@ endif
 .PHONY migrate-down: migrate-down-atlas
 migrate-down-atlas:
 ifeq ($(WITH_DATABASE), true)
-	@$(DOCKER_RUNNER) --net="host" $(MIGRATETOOL_IMAGE) --verbose --path=$(MIGRATION_PATH_IN_CONTAINER)/ --database.dsn=$(DATABASE_URL) down
+	$(DOCKER_RUNNER) --net="host" $(MIGRATETOOL_IMAGE) --verbose --path=$(MIGRATION_PATH_IN_CONTAINER)/ --database.dsn=$(DATABASE_URL) down
 else
 	@echo "Your application doesn't have database, migrations aren't supported"
 endif
@@ -145,7 +144,7 @@ helm-archive:
 
 .PHONY: helm-properties
 helm-properties: helm/tpl.helm.properties
-	@sed 's/{CHART_FILE}/$(CHART_FILE)/g' helm/tpl.helm.properties > helm.properties
+	sed 's/{CHART_FILE}/$(CHART_FILE)/g' helm/tpl.helm.properties > helm.properties
 
 .PHONY: push-chart
 push-chart: helm-lint helm-archive helm-properties
