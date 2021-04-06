@@ -28,7 +28,7 @@ GENERATOR               ?= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
 export GOFLAGS          ?= -mod=vendor
 GO_CACHE                ?= -pkgdir $(BUILD_PATH)/go-cache
 GO_BUILD_FLAGS          ?= $(GO_CACHE) -i -v
-GO_TEST_FLAGS           ?= -v -cover 
+GO_TEST_FLAGS           ?= -v -cover
 GO_PACKAGES             ?= $(shell go list ./... | grep -v vendor)
 
 
@@ -78,7 +78,9 @@ push-atlas: docker
 ifndef IMAGE_REGISTRY
 	@(echo "Please set IMAGE_REGISTRY variable in Makefile.vars to use push command"; exit 1)
 else
-	@docker push $(SERVER_IMAGE):$(IMAGE_VERSION)
+	# Verify no changes locally prior to pushing image
+	git diff --exit-code
+	docker push $(SERVER_IMAGE):$(IMAGE_VERSION)
 endif
 
 .push-$(IMAGE_NAME)-$(IMAGE_VERSION):
