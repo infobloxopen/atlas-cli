@@ -8,6 +8,15 @@ on:
         required: false
         default: DOCKER_GENERATOR=infoblox/atlas-gentool:latest
 jobs:
+  golangci-lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          only-new-issues: true
   test:
     name: Test with integration
     runs-on: ubuntu-latest
