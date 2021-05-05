@@ -2,9 +2,9 @@ package commands
 
 import (
 	"flag"
-	"github.com/infobloxopen/atlas-cli/atlas/commands/update"
 
 	"github.com/infobloxopen/atlas-cli/atlas/commands/bootstrap"
+	"github.com/infobloxopen/atlas-cli/atlas/commands/update"
 )
 
 // Command generically represents a command that is runnable via the atlas

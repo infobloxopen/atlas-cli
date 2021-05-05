@@ -19,7 +19,10 @@ func main() {
 		fmt.Printf("Command \"%s\" is not valid. Please choose one of %v\n", os.Args[1], commands.GetCommandNames())
 		os.Exit(1)
 	}
-	command.GetFlagset().Parse(os.Args[2:])
+	if err := command.GetFlagset().Parse(os.Args[2:]); err != nil {
+		fmt.Println("failed to parse flags:", err)
+		os.Exit(1)
+	}
 	if err := command.Run(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

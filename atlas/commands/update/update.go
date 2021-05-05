@@ -3,8 +3,9 @@ package update
 import (
 	"flag"
 	"fmt"
-	"github.com/infobloxopen/atlas-cli/atlas/application"
 	"os"
+
+	"github.com/infobloxopen/atlas-cli/atlas/application"
 )
 
 type StructureError struct {
