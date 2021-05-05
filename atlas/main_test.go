@@ -39,7 +39,9 @@ func TestMain(m *testing.M) {
 		log.Print(string(out))
 		log.Fatalf("failed to run atlas init-app: %v", err)
 	}
-	defer e2eTeardown()
+	if len(os.Getenv("skip_teardown")) == 0 {
+		defer e2eTeardown()
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -88,7 +90,9 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 	// os.Exit() does not respect defer statements
-	e2eTeardown()
+	if len(os.Getenv("skip_teardown")) == 0 {
+		e2eTeardown()
+	}
 	os.Exit(code)
 }
 

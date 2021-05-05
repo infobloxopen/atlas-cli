@@ -1,0 +1,6 @@
+run:
+  skip-dirs:
+    - templates
+linters:
+  enable:
+    - goimports
