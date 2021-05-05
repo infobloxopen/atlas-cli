@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 	"text/template"
 
@@ -20,6 +21,7 @@ type Application struct {
 	WithGateway        bool
 	WithDatabase       bool
 	WithHealth         bool
+	WithGithub         bool
 	WithMetrics        bool
 	WithPubsub         bool
 	WithHelm           bool
@@ -104,6 +106,9 @@ func (app Application) initializeFiles() error {
 	if app.WithDatabase {
 		fileInitializers = append(fileInitializers, Application.generateMigrationFile)
 	}
+	if app.WithGithub {
+		fileInitializers = append(fileInitializers, app.generateFiles(filterAssets("templates/.github")...))
+	}
 	if app.Helm != nil {
 		fileInitializers = append(fileInitializers, Application.generateHelmCharts)
 	}
@@ -157,6 +162,13 @@ func (app Application) GetDirectories() []string {
 			"db/fixtures",
 		)
 	}
+	if app.WithGithub {
+		dirnames = append(dirnames,
+			mapString(filterAssetDirs("templates/.github"), func(s string) string {
+				return strings.TrimPrefix(s, "templates/")
+			})...,
+		)
+	}
 	if app.WithHelm {
 		dirnames = append(dirnames,
 			app.Helm.GetDirs()...,
@@ -207,6 +219,19 @@ func (app Application) generateKindConfigV119() error {
 
 func (app Application) generateRedisNoPassword() error {
 	return app.generateFile("kind/redis-no-password.yaml.template", "templates/kind/redis-no-password.yaml.template.gotmpl")
+}
+
+// generateFiles is a helper for calling app.generateFile().
+// It calls app.generateFile() for each given filename.
+func (app Application) generateFiles(tmplPaths ...string) func(Application) error {
+	return func(Application) error {
+		for _, tmplPath := range tmplPaths {
+			if err := app.generateFile(strings.TrimSuffix(strings.TrimPrefix(tmplPath, "templates/"), ".gotmpl"), tmplPath); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 }
 
 func (app Application) generateDockerfile() error {
@@ -308,4 +333,43 @@ func (app Application) generateHelmCharts() error {
 		}
 	}
 	return nil
+}
+
+func filterString(vs []string, f func(string) bool) []string {
+	vsf := make([]string, 0)
+	for _, v := range vs {
+		if f(v) {
+			vsf = append(vsf, v)
+		}
+	}
+	return vsf
+}
+
+func mapString(vs []string, f func(string) string) []string {
+	vsm := make([]string, len(vs))
+	for i, v := range vs {
+		vsm[i] = f(v)
+	}
+	return vsm
+}
+
+// filterAssets returns a list of assets under the given prefix/path
+func filterAssets(prefix string) []string {
+	return filterString(templates.AssetNames(), func(s string) bool {
+		return strings.HasPrefix(s, prefix)
+	})
+}
+
+// filterAssets returns a list of directories that contain assets under the given prefix/path
+func filterAssetDirs(prefix string) []string {
+	assets := filterAssets(prefix)
+	dirs := make(map[string]struct{}, len(assets))
+	for _, asset := range assets {
+		dirs[path.Dir(asset)] = struct{}{}
+	}
+	dedupedDirs := make([]string, len(dirs))
+	for dir := range dirs {
+		dedupedDirs = append(dedupedDirs, dir)
+	}
+	return dedupedDirs
 }
