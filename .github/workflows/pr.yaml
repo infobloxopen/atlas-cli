@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      HELM_VERSION: v2.14.3
+      HELM_VERSION: v3.4.2
     steps:
       - uses: actions/setup-go@v2
         with:
