@@ -55,10 +55,10 @@ func main() {
 func NewLogger() *logrus.Logger {
 	logger := logrus.StandardLogger()
 	logrus.SetFormatter(&logrus.JSONFormatter{})
-    logger.SetReportCaller(true)
+	logger.SetReportCaller(true)
 
 	// Set the log level on the default logger based on command line flag
-    if level, err := logrus.ParseLevel(viper.GetString("logging.level")); err != nil {
+	if level, err := logrus.ParseLevel(viper.GetString("logging.level")); err != nil {
 		logger.Errorf("Invalid %q provided for log level", viper.GetString("logging.level"))
 		logger.SetLevel(logrus.InfoLevel)
 	} else {
