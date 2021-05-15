@@ -23,32 +23,34 @@ const (
 
 	// the full set of flag names
 	flagAppName      = "name"
-	flagRegistryName = "registry"
-	flagWithGateway  = "gateway"
-	flagWithDebug    = "debug"
-	flagWithDatabase = "db"
-	flagWithHealth   = "health"
-	flagWithMetrics  = "metrics"
-	flagWithPubsub   = "pubsub"
-	flagWithProfiler = "profiler"
-	flagWithHelm     = "helm"
 	flagExpandName   = "expand"
+	flagRegistryName = "registry"
+	flagWithDatabase = "db"
+	flagWithDebug    = "debug"
+	flagWithGateway  = "gateway"
+	flagWithGithub   = "github"
+	flagWithHealth   = "health"
+	flagWithHelm     = "helm"
+	flagWithMetrics  = "metrics"
+	flagWithProfiler = "profiler"
+	flagWithPubsub   = "pubsub"
 )
 
 var (
 	// flag set for initializing the application
 	initialize         = flag.NewFlagSet(commandInitApp, flag.ExitOnError)
-	initializeName     = initialize.String(flagAppName, "", "the application name (required)")
-	initializeRegistry = initialize.String(flagRegistryName, "", "the Docker registry (optional)")
-	initializeGateway  = initialize.Bool(flagWithGateway, false, "generate project with a gRPC gateway (default false)")
-	initializeDebug    = initialize.Bool(flagWithDebug, false, "print debug statements during intialization (default false)")
 	initializeDatabase = initialize.Bool(flagWithDatabase, false, "initialize the application with database folders")
-	initializeHealth   = initialize.Bool(flagWithHealth, false, "initialize the application with internal health checks")
-	initializeMetrics  = initialize.Bool(flagWithMetrics, true, "initialize the application with gRPC Prometheus metrics")
-	initializePubsub   = initialize.Bool(flagWithPubsub, false, "initialize the application with a pubsub example")
-	initializeProfiler = initialize.Bool(flagWithProfiler, false, "initialize the application with a profiling service")
-	initializeHelm     = initialize.Bool(flagWithHelm, false, "initialize the application with the helm charts")
+	initializeDebug    = initialize.Bool(flagWithDebug, false, "print debug statements during intialization (default false)")
 	initializeExpand   = initialize.String(flagExpandName, "", "the name of the input file for the `expand` command (optional)")
+	initializeGateway  = initialize.Bool(flagWithGateway, false, "generate project with a gRPC gateway (default false)")
+	initializeGithub   = initialize.Bool(flagWithGithub, true, "generate project with Github-specific configs in /.github")
+	initializeHealth   = initialize.Bool(flagWithHealth, false, "initialize the application with internal health checks")
+	initializeHelm     = initialize.Bool(flagWithHelm, false, "initialize the application with the helm charts")
+	initializeMetrics  = initialize.Bool(flagWithMetrics, true, "initialize the application with gRPC Prometheus metrics")
+	initializeName     = initialize.String(flagAppName, "", "the application name (required)")
+	initializeProfiler = initialize.Bool(flagWithProfiler, false, "initialize the application with a profiling service")
+	initializePubsub   = initialize.Bool(flagWithPubsub, false, "initialize the application with a pubsub example")
+	initializeRegistry = initialize.String(flagRegistryName, "", "the Docker registry (optional)")
 )
 
 // bootstrap implements the command interface for project intialization
@@ -79,6 +81,7 @@ func (b Bootstrap) Run() error {
 		Root:         root,
 		WithGateway:  *initializeGateway,
 		WithDatabase: *initializeDatabase,
+		WithGithub:   *initializeGithub,
 		WithHealth:   *initializeHealth,
 		WithMetrics:  *initializeMetrics,
 		WithPubsub:   *initializePubsub,
