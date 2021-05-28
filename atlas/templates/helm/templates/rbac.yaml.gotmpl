@@ -1,0 +1,40 @@
+{{`{{- if eq .Values.rbac.enable true }}`}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{`{{  include "chart.fullname" . }}`}}-sakey
+  namespace: {{`{{ .Release.Namespace }}`}}
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: {{`{{ printf "{\"auths\": {\"%s\": {\"auth\": \"%s\"}}}" .Values.docker.registry (printf "%s:%s" .Values.docker.username .Values.docker.password | b64enc) | b64enc }}`}}
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: {{`{{ include "chart.fullname" . }}`}}-serviceaccount
+  namespace: {{`{{ .Release.Namespace }}`}}
+imagePullSecrets:
+- name: {{`{{  include "chart.fullname" . }}`}}-sakey
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+ name: {{`{{ include "chart.fullname" . }}`}}-serviceaccount
+roleRef:
+ apiGroup: rbac.authorization.k8s.io
+ kind: Role
+ name: {{`{{ include "chart.fullname" . }}`}}-serviceaccount
+subjects:
+ - kind: ServiceAccount
+   name: {{`{{ include "chart.fullname" . }}`}}-serviceaccount
+   namespace: {{`{{ .Release.Namespace }}`}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+ name: {{`{{ include "chart.fullname" . }}`}}-serviceaccount
+rules:
+ - apiGroups: [""]
+   resources: ["configmaps"]
+   verbs: ["get", "list", "watch"]
+{{`{{ end }}`}}

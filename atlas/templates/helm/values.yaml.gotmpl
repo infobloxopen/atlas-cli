@@ -2,7 +2,6 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-{{ if or .WithHealth .WithMetrics }}internalPort: 8081{{ end }}
 httpProtocol: TCP
 grpcProtocol: TCP
 replicaCount: 1
@@ -21,6 +20,13 @@ service:
   type: ClusterIP
   grpcPort: 9090
   httpPort: 8080
+
+internal:
+  enable: {{ if or .WithHealth .WithMetrics }}true{{ else }}false{{ end }}
+  port: 8081
+
+rbac:
+  enable: false
 
 ingress:
   enabled: true

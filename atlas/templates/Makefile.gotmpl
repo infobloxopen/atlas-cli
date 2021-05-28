@@ -1,5 +1,7 @@
 include Makefile.vars
 include Makefile.common
+{{ if .WithKind }}include Makefile.kind{{ end}}
+{{ if .WithDebugger }}include Makefile.remotedebug{{ end}}
 
 # to override a target from Makefile.common just redefine the target.
 # you can also chain the original atlas target by adding

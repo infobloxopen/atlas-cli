@@ -4,8 +4,8 @@
 PROJECT_ROOT            ?= $(PWD)
 BUILD_PATH              ?= bin
 DOCKERFILE_PATH         ?= $(CURDIR)/docker
-GO_IMAGE 								?= golang:1.14-alpine
-GO_RUNNER 							?= $(DOCKER_RUNNER) $(GO_IMAGE)
+GO_IMAGE 				?= golang:1.16-alpine
+GO_RUNNER 				?= $(DOCKER_RUNNER) $(GO_IMAGE)
 
 # configuration for image names
 USERNAME                ?= $(USER)
@@ -40,6 +40,11 @@ WITH_GATEWAY  ?= false
 
 GO_MOD = go.mod
 
+{{ if .WithHelm }}
+CHART := {{ .Helm.GetName }}
+CHART_VERSION := $(IMAGE_VERSION)
+CHART_FILE := $(CHART)-$(CHART_VERSION).tgz
+{{end}}
 
 ifeq ($(WITH_DATABASE), true)
 PROTOBUF_ARGS += --gorm_out=.
@@ -162,4 +167,20 @@ helm-install: docker
 helm-delete:
 	helm delete --purge {{ .Helm.GetName }}
 
+.PHONY: clean-chart
+clean-chart:
+	rm -f build.properties
+	rm -f helm/*.tgz
+
+package: $(CHART_FILE)
+
+$(CHART_FILE):
+	${HELM} package helm/$(CHART) --version $(CHART_VERSION)
+
+build.properties: build.properties.in
+	@sed 's/{CHART_FILE}/$(CHART_FILE)/g' build.properties.in > build.properties
+
+.PHONY: show-image-version
+show-image-version:
+	@echo $(IMAGE_VERSION)
 {{end}}

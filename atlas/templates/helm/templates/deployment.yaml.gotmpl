@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}
@@ -17,13 +17,16 @@ spec:
 {{- if .WithMetrics }}
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: {{ "{{" }} .Values.internalPort | quote {{ "}}" }}
+        prometheus.io/port: {{ "{{" }} .Values.internal.port | quote {{ "}}" }}
 {{- end }}
       labels:
         app: {{ "{{" }} include "chart.fullname" . {{ "}}" }}
         app.kubernetes.io/name: {{ "{{" }} include "chart.name" . {{ "}}" }}
         app.kubernetes.io/instance: {{ "{{" }} .Release.Name {{ "}}" }}
     spec:
+      {{`{{- if .Values.rbac.enable }}`}}
+      serviceAccountName: {{`{{ include "chart.fullname" . }}`}}-serviceaccount
+      {{`{{- end }}`}}
     {{ "{{" }}- with .Values.imagePullSecrets {{ "}}" }}
       imagePullSecrets:
         {{ "{{" }}- toYaml . | nindent 8 {{ "}}" }}
@@ -60,28 +63,30 @@ spec:
               containerPort: {{ "{{" }} .Values.app.httpPort {{ "}}" }}
               protocol: {{ "{{" }} .Values.httpProtocol {{ "}}" }}
             - name: internal
-              containerPort: {{ "{{" }} .Values.internalPort {{ "}}" }}
+              containerPort: {{ "{{" }} .Values.internal.port {{ "}}" }}
           args: [
 {{ if .WithDatabase }}
             "--database.dsn=$(dsn)",
 {{ end }}
           ]
+{{`{{- if .Values.internal.enable }}`}}
           livenessProbe:
             httpGet:
               path: /healthz
-              port: {{ "{{" }} .Values.internalPort {{ "}}" }}
+              port: {{ "{{" }} .Values.internal.port {{ "}}" }}
               scheme: HTTP
             initialDelaySeconds: 3
             timeoutSeconds: 10
           readinessProbe:
             httpGet:
               path: /ready
-              port: {{ "{{" }} .Values.internalPort {{ "}}" }}
+              port: {{ "{{" }} .Values.internal.port {{ "}}" }}
               scheme: HTTP
             initialDelaySeconds: 2
             periodSeconds: 5
             successThreshold: 1
             failureThreshold: 10
+{{`{{- end }}`}}
           resources:
             {{ "{{" }}- toYaml .Values.resources | nindent 12 {{ "}}" }}
       {{ "{{" }}- with .Values.nodeSelector {{ "}}" }}

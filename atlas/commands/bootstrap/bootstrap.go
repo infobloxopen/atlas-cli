@@ -33,6 +33,8 @@ const (
 	flagWithProfiler = "profiler"
 	flagWithHelm     = "helm"
 	flagExpandName   = "expand"
+	flagWithKind     = "kind"
+	flagWithDebugger = "debugger"
 )
 
 var (
@@ -49,6 +51,8 @@ var (
 	initializeProfiler = initialize.Bool(flagWithProfiler, false, "initialize the application with a profiling service")
 	initializeHelm     = initialize.Bool(flagWithHelm, false, "initialize the application with the helm charts")
 	initializeExpand   = initialize.String(flagExpandName, "", "the name of the input file for the `expand` command (optional)")
+	initializeKind     = initialize.Bool(flagWithKind, false, "initialize the application with KinD support (optional, only applicable when helm charts are enabled)")
+	initializeDebugger = initialize.Bool(flagWithDebugger, false, "initialize the application with remote debug support (optional, only applicable when KinD support is enabled)")
 )
 
 // bootstrap implements the command interface for project intialization
@@ -85,6 +89,8 @@ func (b Bootstrap) Run() error {
 		WithProfiler: *initializeProfiler,
 		WithHelm:     *initializeHelm,
 		ExpandName:   *initializeExpand,
+		WithDebugger: *initializeDebugger,
+		WithKind:     *initializeKind,
 	}
 
 	if app.WithHelm {

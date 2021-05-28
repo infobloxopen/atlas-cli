@@ -1,0 +1,146 @@
+KIND_NAME        := minikube
+KUBECTL_VERSION  ?= v1.15.10
+KIND_VERSION     ?= v0.8.1
+NODE_VERSION     ?= 1.19.0
+DAPR_VERSION     := 1.1.1
+HELM_VERSION     := v3.5.3
+IMAGE_VERSION    := $(shell git describe --long --tags --dirty=-unreleased --always || echo pre-commit)
+REGISTRY         := {{ .Registry }}
+IMAGE_REPO       := {{ .Name }}
+DOCKER_IMAGE     := $(REGISTRY)/$(IMAGE_REPO):$(IMAGE_VERSION)
+NODE_IMAGE       ?= kindest/node:v${NODE_VERSION}
+KUBECONFIG       ?= ${HOME}/.kube/config
+KUBECTL          := bin/kubectl
+KIND             := bin/kind
+HELM             := bin/helm
+TARGET_NAMESPACE ?= `cat kind/.id`
+HELM3_VER        ?= `helm version -c --template {{`{{.Version}}`}} | grep v3`
+KERNEL_NAME      := `uname`
+
+.id:
+	@git config user.email | awk -F@ '{print $$1}' > kind/.id
+
+kind-download: $(KUBECTL)
+	@if [ -f $(KIND) ]; then echo "$(KIND) is already downloaded, `$(KIND) --version`"; else \
+	mkdir -p bin; \
+	curl -Lo $(KIND) https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-$(KERNEL_NAME)-amd64; \
+	chmod +x $(KIND); \
+	fi
+
+helm-download:
+	@if [ -f $(HELM) ]; then echo "$(HELM) is already downloaded, `$(HELM) version`"; else \
+	mkdir -p bin; \
+	echo "Downloading https://get.helm.sh/helm-${HELM_VERSION}-$(shell echo $(KERNEL_NAME) | tr A-Z a-z)-amd64.tar.gz"; \
+	curl -Lo $(HELM).tar.gz https://get.helm.sh/helm-${HELM_VERSION}-$(shell echo $(KERNEL_NAME) | tr A-Z a-z)-amd64.tar.gz ; \
+	cd bin; \
+	tar -xzf helm.tar.gz ; \
+	mv $(shell echo $(KERNEL_NAME) | tr A-Z a-z)-amd64/helm .; \
+	rm -rf $(shell echo $(KERNEL_NAME) | tr A-Z a-z)-amd64; \
+	rm helm.tar.gz; \
+	cd ..; \
+	chmod +x $(HELM); \
+	fi
+
+create-namespace: $(KUBECTL)
+	@$(KUBECTL) create namespace "$(TARGET_NAMESPACE)" || true
+
+kind-dapr: kind-cluster helm-download
+	@if [ "$(shell $(KUBECTL) get service -n dapr | grep -c dapr)" = "0" ]; then \
+	$(HELM) repo add dapr https://dapr.github.io/helm-charts/; \
+	$(HELM) repo update; \
+	$(HELM) upgrade --install dapr dapr/dapr \
+	--version=$(DAPR_VERSION) \
+	--namespace dapr \
+	--create-namespace \
+	--wait; else \
+	echo "dapr is already installed"; fi
+
+kind-redis: kind-dapr create-namespace
+	@if [ "$(shell $(KUBECTL) get service -n redis | grep -c redis)" = "0" ]; then \
+	$(HELM) repo add bitnami https://charts.bitnami.com/bitnami; \
+	$(HELM) upgrade --install --namespace redis --create-namespace --wait redis bitnami/redis; else \
+	echo "redis is already installed"; fi
+	@if [ "$(shell $(KUBECTL) get component -n $(TARGET_NAMESPACE) | grep -c dapr-component)" = "0" ]; then \
+	sed -e "s/{TARGET_NAMESPACE}/$(TARGET_NAMESPACE)/; s/{REDIS_PASSWORD}/`$(KUBECTL) get secret --namespace redis redis -o jsonpath="{.data.redis-password}" | base64 --decode`/" kind/redis-no-password.yaml.template > kind/redis.yaml; \
+	$(KUBECTL) apply -f kind/redis.yaml; \
+	rm kind/redis.yaml; else \
+	echo "dapr-component is already installed"; fi
+
+kind-deploy: kind-deploy-{{ .Helm.GetName }}
+
+create-deployment:
+	@$(HELM) template {{ .Helm.GetName }} helm/{{ .Helm.GetName }} \
+		--wait --namespace $(TARGET_NAMESPACE) \
+		--set image.tag=$(IMAGE_VERSION) \
+		-f helm/{{ .Helm.GetName }}/minikube-values.yaml > deploy-$(IMAGE_REPO).yaml
+
+deploy-{{ .Helm.GetName }}: create-namespace create-deployment
+	@$(KUBECTL) delete --ignore-not-found=true -f deploy-$(IMAGE_REPO).yaml
+	@$(KUBECTL) apply -f deploy-$(IMAGE_REPO).yaml
+	@rm -f deploy-$(IMAGE_REPO).yaml
+
+image: .image-$(IMAGE_VERSION)
+
+kind-deploy-%: target=$(@:kind-%=%)
+kind-deploy-%: kind image package
+	@if [ "$(shell $(KUBECTL) config current-context | grep kind-)" = "" ]; then\
+		>&2 echo minikube install is not recommended on non-kind clusters; exit 2; \
+	fi;
+	@$(KIND) load --name ${KIND_NAME} docker-image ${DOCKER_IMAGE}
+	# TODO: integration tests are calling helm
+	@$(MAKE) ${target} HELM_SETFLAGS='-f helm/minikube-values.yaml ${HELM_SETFLAGS}'
+
+kind/kind-config: kind/kind-config-v${NODE_VERSION}.yaml
+	@cp -v $< $@
+
+kind/kind-config-v${NODE_VERSION}.yaml: kind/kind-config.yaml.in
+	@sed 's|$${NODE_IMAGE}|${NODE_IMAGE}|g' kind/kind-config.yaml.in > kind/kind-config-v${NODE_VERSION}.yaml
+
+kind-image: .kind-image-v${NODE_VERSION}
+
+
+# see https://kind.sigs.k8s.io/docs/user/quick-start/#building-images
+.kind-image-v${NODE_VERSION}:
+	@kind build node-image --image ${NODE_IMAGE}
+	@docker push ${NODE_IMAGE}
+
+push: .push-$(IMAGE_VERSION)
+
+.push-$(IMAGE_VERSION): .image-$(IMAGE_VERSION)
+	@docker push $(DOCKER_IMAGE)
+	@touch $@
+
+.image-$(IMAGE_VERSION):
+	@docker build \
+		--build-arg GO111MODULE=off \
+		--build-arg GOPRIVATE="${GOPRIVATE}" \
+		--build-arg BUILD_MANIFEST="$(BUILD_MANIFEST_JSON)" \
+		-t $(DOCKER_IMAGE) -f $(SERVER_DOCKERFILE) .
+	@touch $@
+
+kind-cluster: kind-download kind/kind-config
+	@if [ "$(shell ${KIND} get clusters | grep ${KIND_NAME})" = "" ] ; then \
+		$(KIND) create cluster -v 1 --name ${KIND_NAME} --config kind/kind-config-v${NODE_VERSION}.yaml; \
+	fi
+	@$(KUBECTL) config use-context kind-${KIND_NAME}
+	# TODO: integration tests are calling helm
+	@if [ "${HELM3_VER}" = "" ]; then\
+		helm init --service-account tiller; \
+	fi
+
+kind: kind-cluster kind-dapr kind-redis
+
+kind-destroy: kind-download
+	@$(KIND) delete cluster --name ${KIND_NAME}
+
+kind-clean:
+	@rm -f .image-* {{ .Helm.GetName }}-*
+
+bin/kubectl:
+	@mkdir -p bin
+	@curl -Ls -o bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/$(shell echo $(KERNEL_NAME) | tr A-Z a-z)/amd64/kubectl
+	@chmod +x bin/kubectl
+
+helm-lint: helm-download
+	${HELM} lint helm/$(CHART) -f helm/$(CHART)/minikube-values.yaml
+
