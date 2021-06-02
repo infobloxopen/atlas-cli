@@ -17,7 +17,10 @@ DOCKERCONFIGJSON := `cat $(CONFIGJSONFILE) | base64 --wrap=0`
 DOCKERCREDS      := if [ -f $(CONFIGJSONFILE) ]; then echo ",docker.b64encodedDockerConfig=$(DOCKERCONFIGJSON)"; fi
 
 .id:
-	@git config user.email | awk -F@ '{print $$1}' > kind/.id
+	@if [ -f "kind/.id" ]; then echo "Use defined namespace $(TARGET_NAMESPACE)"; else \
+	git config user.email | awk -F@ '{print $$1}' > kind/.id; \
+	echo "Define user namespace $(TARGET_NAMESPACE)"; \
+	fi
 
 kind-download: $(KUBECTL)
 	@if [ -f $(KIND) ]; then echo "$(KIND) is already downloaded, `$(KIND) --version`"; else \
@@ -26,7 +29,7 @@ kind-download: $(KUBECTL)
 	chmod +x $(KIND); \
 	fi
 
-create-namespace: $(KUBECTL)
+create-namespace: $(KUBECTL) .id
 	@$(KUBECTL) create namespace "$(TARGET_NAMESPACE)" || true
 
 kind-dapr: helm-install kind-cluster helm-download
@@ -53,7 +56,7 @@ kind-redis: helm-install kind-dapr create-namespace
 
 kind-deploy: kind-deploy-{{ .Helm.GetName }}
 
-create-deployment: helm-install
+create-deployment: helm-install .id
 	@$(HELM) template {{ .Helm.GetName }} helm/{{ .Helm.GetName }} \
 		--wait --namespace $(TARGET_NAMESPACE) \
 		--set image.tag=$(IMAGE_VERSION)$(shell $(DOCKERCREDS)) \
