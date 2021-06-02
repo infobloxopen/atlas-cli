@@ -10,15 +10,15 @@ NODE_IMAGE       ?= kindest/node:v${NODE_VERSION}
 KUBECONFIG       ?= ${HOME}/.kube/config
 KUBECTL          := bin/kubectl
 KIND             := bin/kind
-TARGET_NAMESPACE ?= `cat kind/.id`
+TARGET_NAMESPACE ?= `cat .id`
 KERNEL_NAME      := `uname`
 CONFIGJSONFILE   := ~/.docker/config.json
 DOCKERCONFIGJSON := `cat $(CONFIGJSONFILE) | base64 --wrap=0`
 DOCKERCREDS      := if [ -f $(CONFIGJSONFILE) ]; then echo ",docker.b64encodedDockerConfig=$(DOCKERCONFIGJSON)"; fi
 
 .id:
-	@if [ -f "kind/.id" ]; then echo "Use defined namespace $(TARGET_NAMESPACE)"; else \
-	git config user.email | awk -F@ '{print $$1}' > kind/.id; \
+	@if [ -f ".id" ]; then echo "Use defined namespace $(TARGET_NAMESPACE)"; else \
+	git config user.email | awk -F@ '{print $$1}' > .id; \
 	echo "Define user namespace $(TARGET_NAMESPACE)"; \
 	fi
 
