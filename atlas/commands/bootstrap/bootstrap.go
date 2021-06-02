@@ -34,7 +34,7 @@ const (
 	flagWithHelm     = "helm"
 	flagExpandName   = "expand"
 	flagWithKind     = "kind"
-	flagWithDebugger = "debugger"
+	flagWithDelve    = "delve"
 )
 
 var (
@@ -52,7 +52,7 @@ var (
 	initializeHelm     = initialize.Bool(flagWithHelm, false, "initialize the application with the helm charts")
 	initializeExpand   = initialize.String(flagExpandName, "", "the name of the input file for the `expand` command (optional)")
 	initializeKind     = initialize.Bool(flagWithKind, false, "initialize the application with KinD support (optional, only applicable when helm charts are enabled)")
-	initializeDebugger = initialize.Bool(flagWithDebugger, false, "initialize the application with remote debug support (optional, only applicable when KinD support is enabled)")
+	initializeDebugger = initialize.Bool(flagWithDelve, false, "initialize the application with remote debug support (optional, only applicable when helm charts are enabled)")
 )
 
 // bootstrap implements the command interface for project intialization
@@ -89,7 +89,7 @@ func (b Bootstrap) Run() error {
 		WithProfiler: *initializeProfiler,
 		WithHelm:     *initializeHelm,
 		ExpandName:   *initializeExpand,
-		WithDebugger: *initializeDebugger,
+		WithDelve:    *initializeDebugger,
 		WithKind:     *initializeKind,
 	}
 
@@ -217,6 +217,9 @@ func initRepo() error {
 		return err
 	}
 	if err := runCommand("git", "commit", "-m", "Initial commit"); err != nil {
+		return err
+	}
+	if err := runCommand("git", "tag", "v0.0.1"); err != nil {
 		return err
 	}
 	fmt.Println("done!")

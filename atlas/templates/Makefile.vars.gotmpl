@@ -9,7 +9,7 @@ DOCKER_ENV := -e AWS_REGION=$(AWS_REGION) -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_
 
 # configuration for image names
 USERNAME                := $(USER)
-GIT_COMMIT              := $(shell git describe --dirty=-unsupported --always --tags || echo pre-commit)
+GIT_COMMIT              := $(shell git describe --long --dirty=-unreleased --always --tags || echo pre-commit)
 IMAGE_VERSION           ?= $(GIT_COMMIT)
 {{ if .Registry }}IMAGE_REGISTRY ?= {{ .Registry}}
 {{ end}}
@@ -56,8 +56,8 @@ WITH_GATEWAY = true
 #configuration for helm
 {{ if .WithHelm }}
 BUILD_NUMBER  ?=0
-HELM_IMAGE    := infoblox/helm:2.14.3-1
-HELM := $(DOCKER_RUNNER) $(DOCKER_ENV) -w $(SRCROOT_IN_CONTAINER) $(HELM_IMAGE)
+HELM          := bin/helm
+HELM3_VER     ?= `$(HELM) version -c --template {{`{{.Version}}`}} | grep v3`
 CHART_NAME    := {{ .Helm.GetName }}
 CHART_VERSION ?= $(shell git describe --long --tags --dirty=-unreleased --always || echo pre-commit)-j$(BUILD_NUMBER)
 CHART_FILE    := $(CHART_NAME)-$(CHART_VERSION).tgz

@@ -27,7 +27,7 @@ type Application struct {
 	Helm         *helm.Helm
 	ExpandName   string
 	WithKind     bool
-	WithDebugger bool
+	WithDelve    bool
 }
 
 // Initialize generates brand-new application
@@ -89,7 +89,7 @@ func (app Application) initializeFiles() error {
 			Application.generateKindConfigYaml, Application.generateKindConfigV119,
 			Application.generateRedisNoPassword)
 	}
-	if app.WithDebugger {
+	if app.WithDelve {
 		fileInitializers = append(fileInitializers, Application.generateMakefileDebugger)
 		fileInitializers = append(fileInitializers, Application.generateDockerfileDebug)
 	}

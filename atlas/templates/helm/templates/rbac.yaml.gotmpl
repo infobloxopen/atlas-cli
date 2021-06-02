@@ -6,7 +6,11 @@ metadata:
   namespace: {{`{{ .Release.Namespace }}`}}
 type: kubernetes.io/dockerconfigjson
 data:
+  {{`{{- if .Values.docker.b64encodedDockerConfig }}`}}
+  .dockerconfigjson: {{`{{ .Values.docker.b64encodedDockerConfig }}`}}
+  {{`{{ else }}`}}
   .dockerconfigjson: {{`{{ printf "{\"auths\": {\"%s\": {\"auth\": \"%s\"}}}" .Values.docker.registry (printf "%s:%s" .Values.docker.username .Values.docker.password | b64enc) | b64enc }}`}}
+  {{`{{- end }}`}}
 ---
 kind: ServiceAccount
 apiVersion: v1
@@ -15,26 +19,4 @@ metadata:
   namespace: {{`{{ .Release.Namespace }}`}}
 imagePullSecrets:
 - name: {{`{{  include "chart.fullname" . }}`}}-sakey
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
- name: {{`{{ include "chart.fullname" . }}`}}-serviceaccount
-roleRef:
- apiGroup: rbac.authorization.k8s.io
- kind: Role
- name: {{`{{ include "chart.fullname" . }}`}}-serviceaccount
-subjects:
- - kind: ServiceAccount
-   name: {{`{{ include "chart.fullname" . }}`}}-serviceaccount
-   namespace: {{`{{ .Release.Namespace }}`}}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
- name: {{`{{ include "chart.fullname" . }}`}}-serviceaccount
-rules:
- - apiGroups: [""]
-   resources: ["configmaps"]
-   verbs: ["get", "list", "watch"]
 {{`{{ end }}`}}

@@ -140,12 +140,26 @@ endif
 
 #configuration for helm
 {{ if .WithHelm }}
+helm-download:
+	@if [ -f $(HELM) ]; then echo "$(HELM) is already downloaded, `$(HELM) version`"; else \
+	mkdir -p bin; \
+	echo "Downloading https://get.helm.sh/helm-${HELM_VERSION}-$(shell echo $(KERNEL_NAME) | tr A-Z a-z)-amd64.tar.gz"; \
+	curl -Lo $(HELM).tar.gz https://get.helm.sh/helm-${HELM_VERSION}-$(shell echo $(KERNEL_NAME) | tr A-Z a-z)-amd64.tar.gz ; \
+	cd bin; \
+	tar -xzf helm.tar.gz ; \
+	mv $(shell echo $(KERNEL_NAME) | tr A-Z a-z)-amd64/helm .; \
+	rm -rf $(shell echo $(KERNEL_NAME) | tr A-Z a-z)-amd64; \
+	rm helm.tar.gz; \
+	cd ..; \
+	chmod +x $(HELM); \
+	fi
+
 .PHONY: helm-lint
-helm-lint:
-	cd helm && $(HELM) lint -f $(CHART_NAME)/minikube-values.yaml $(CHART_NAME)
+helm-lint: helm-download
+	$(HELM) lint -f $(CHART_NAME)
 
 .PHONY: helm-archive
-helm-archive:
+helm-archive: helm-download
 	$(HELM) package -d $(SRCROOT_ON_HOST) helm/$(CHART_NAME) --version $(CHART_VERSION)
 
 .PHONY: helm-properties
@@ -157,15 +171,11 @@ push-chart: helm-lint helm-archive helm-properties
 	$(HELM) s3 push $(SRCROOT_IN_CONTAINER)/$(CHART_FILE) {{ .Registry }}
 
 .PHONY: helm-install
-helm-install: docker
-	helm upgrade --install --set "image.tag=$(IMAGE_VERSION)" --devel --namespace {{ .Helm.GetName }} -f ./helm/{{ .Helm.GetName }}/minikube-values.yaml {{ .Helm.GetName }} ./helm/{{ .Helm.GetName }}/
-	# You have to add host name minikube.local to hosts file. This is necessary to communicate with your app in minikube.
-	# You might execute command in terminal:
-	# 'echo "$(minikube ip) minikube.local" > /etc/hosts' or 'echo "$(minikube ip) minikube.local" | sudo tee -a /etc/hosts'
+helm-install: helm-download
 
 .PHONY: helm-delete
-helm-delete:
-	helm delete --purge {{ .Helm.GetName }}
+helm-delete: helm-download
+	$(HELM) delete --purge {{ .Helm.GetName }}
 
 .PHONY: clean-chart
 clean-chart:
@@ -174,7 +184,7 @@ clean-chart:
 
 package: $(CHART_FILE)
 
-$(CHART_FILE):
+$(CHART_FILE): helm-download
 	${HELM} package helm/$(CHART) --version $(CHART_VERSION)
 
 build.properties: build.properties.in
