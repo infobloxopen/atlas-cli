@@ -1,0 +1,13 @@
+DEBUG_DOCKERFILE   := $(DOCKERFILE_PATH)/Dockerfile.debug
+DEBUG_IMAGE_VERSION       ?= $(shell git describe --long --tags --dirty=-unreleased --always || echo pre-commit)-debug
+
+debug-image:
+	@rm -f .image-*-debug
+	$(MAKE) image SERVER_DOCKERFILE=$(DEBUG_DOCKERFILE) IMAGE_VERSION=$(DEBUG_IMAGE_VERSION)
+
+debug-push:
+	@rm -f .push-*-debug
+	$(MAKE) push SERVER_DOCKERFILE=$(DEBUG_DOCKERFILE) IMAGE_VERSION=$(DEBUG_IMAGE_VERSION)
+
+debug-kind-deploy: debug-image
+	$(MAKE) kind-deploy SERVER_DOCKERFILE=$(DEBUG_DOCKERFILE) IMAGE_VERSION=$(DEBUG_IMAGE_VERSION)

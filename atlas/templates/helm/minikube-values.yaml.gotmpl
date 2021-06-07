@@ -5,7 +5,10 @@ docker:
   username: "{ Fill this in }"
   password: "{ Fill this in }"
 
-#### Values that will be populated from env vaues
+rbac:
+  enable: true
+
+#### Values that will be populated from env values
 env: "minikube"
 zone: "local"
 
@@ -30,6 +33,10 @@ app:
   namespace: "{{ .Helm.GetName }}-{{ "{{" }} .Values.env {{ "}}" }}"
   httpPort: 8080
   grpcPort: 9090
+
+internal:
+  enable: false
+  port: 8081
 
 secrets:
   enabled: true

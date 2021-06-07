@@ -61,17 +61,19 @@ $ cd my-application
 #### Flags
 Here's the full set of flags for the `init-app` command.
 
-| Flag          | Description                                                         | Required      | Default Value |
-| ------------- | ------------------------------------------------------------------- | ------------- | ------------- |
-| `name`        | The name of the new application                                     | Yes           | N/A           |
-| `db`          | Bootstrap the application with PostgreSQL database integration      | No            | `false`       |
-| `gateway`     | Initialize the application with a gRPC gateway                      | No            | `false`       |
-| `health`      | Initialize the application with internal health checks              | No            | `false`       |
-| `metrics`     | Initialize the application with gRPC Prometheus metrics             | No            | `true`        |
-| `pubsub`      | Initialize the application with a atlas-pubsub example              | No            | `false`       |
-| `registry`    | The Docker registry where application images are pushed             | No            | `""`          |
-| `helm`        | Initialize the application with helm charts                         | No            | `false`       |
-| `expand`      | Initialize the application with additional services based on a file | No            | `""`          |
+| Flag          | Description                                                                                                   | Required      | Default Value |
+| ------------- | ------------------------------------------------------------------------------------------------------------- | ------------- | ------------- |
+| `name`        | The name of the new application                                                                               | Yes           | N/A           |
+| `db`          | Bootstrap the application with PostgreSQL database integration                                                | No            | `false`       |
+| `gateway`     | Initialize the application with a gRPC gateway                                                                | No            | `false`       |
+| `health`      | Initialize the application with internal health checks                                                        | No            | `false`       |
+| `metrics`     | Initialize the application with gRPC Prometheus metrics                                                       | No            | `true`        |
+| `pubsub`      | Initialize the application with a atlas-pubsub example                                                        | No            | `false`       |
+| `registry`    | The Docker registry where application images are pushed                                                       | No            | `""`          |
+| `helm`        | Initialize the application with helm charts                                                                   | No            | `false`       |
+| `expand`      | Initialize the application with additional services based on a file                                           | No            | `""`          |
+| `kind`        | initialize the application with KinD support (optional, only applicable when helm charts are enabled)         | No            | `false`       |
+| `delve`       | initialize the application with remote debug support (optional, only applicable when helm charts are enabled) | No            | `false`       |
 
 You can run `atlas init-app --help` to see these flags and their descriptions on the command-line.
 

@@ -69,6 +69,7 @@ func (h Helm) GetFiles(withDatabase bool) map[string]string {
 		helmPath[templateDir] + "/NOTES.txt":               tmplPath[templateDir] + "/NOTES.txt.gotmpl",
 		helmPath[templateDir] + "/service" + helmExt:       tmplPath[templateDir] + "/service" + tmplExt,
 		helmPath[templateDir] + "/secrets" + helmExt:       tmplPath[templateDir] + "/secrets" + tmplExt,
+		helmPath[templateDir] + "/rbac" + helmExt:          tmplPath[templateDir] + "/rbac" + tmplExt,
 	}
 
 	if withDatabase {

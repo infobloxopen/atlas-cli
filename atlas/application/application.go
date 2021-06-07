@@ -26,6 +26,8 @@ type Application struct {
 	WithProfiler bool
 	Helm         *helm.Helm
 	ExpandName   string
+	WithKind     bool
+	WithDelve    bool
 }
 
 // Initialize generates brand-new application
@@ -81,6 +83,15 @@ func (app Application) initializeFiles() error {
 		Application.generateService,
 		Application.generateServiceTest,
 	}
+	if app.WithKind {
+		fileInitializers = append(fileInitializers, Application.generateMakefileKind,
+			Application.generateKindConfig,	Application.generateKindConfigYaml,
+			Application.generateKindConfigV119,	Application.generateRedisNoPassword)
+	}
+	if app.WithDelve {
+		fileInitializers = append(fileInitializers, Application.generateMakefileDebugger)
+		fileInitializers = append(fileInitializers, Application.generateDockerfileDebug)
+	}
 	if app.WithGateway {
 		fileInitializers = append(fileInitializers, Application.generateServerSwagger)
 	}
@@ -124,6 +135,11 @@ func (app Application) GetDirectories() []string {
 		"docker",
 		"deploy",
 	}
+	if app.WithKind {
+		dirnames = append(dirnames,
+			"kind",
+		)
+	}
 	if app.WithDatabase {
 		dirnames = append(dirnames,
 			"db/migrations",
@@ -165,8 +181,28 @@ func (app Application) generateFile(filename, templatePath string) error {
 	return err
 }
 
+func (app Application) generateKindConfig() error {
+	return app.generateFile("kind/kind-config", "templates/kind/kind-config.gotmpl")
+}
+
+func (app Application) generateKindConfigYaml() error {
+	return app.generateFile("kind/kind-config.yaml.in", "templates/kind/kind-config.yaml.in.gotmpl")
+}
+
+func (app Application) generateKindConfigV119() error {
+	return app.generateFile("kind/kind-config-v1.19.0.yaml", "templates/kind/kind-config-v1.19.0.yaml.gotmpl")
+}
+
+func (app Application) generateRedisNoPassword() error {
+	return app.generateFile("kind/redis-no-password.yaml.template", "templates/kind/redis-no-password.yaml.template.gotmpl")
+}
+
 func (app Application) generateDockerfile() error {
 	return app.generateFile("docker/Dockerfile", "templates/docker/Dockerfile.gotmpl")
+}
+
+func (app Application) generateDockerfileDebug() error {
+	return app.generateFile("docker/Dockerfile.debug", "templates/docker/Dockerfile.debug.gotmpl")
 }
 
 func (app Application) generateDeployFile() error {
@@ -187,6 +223,14 @@ func (app Application) generateGitignore() error {
 
 func (app Application) generateMakefile() error {
 	return app.generateFile("Makefile", "templates/Makefile.gotmpl")
+}
+
+func (app Application) generateMakefileKind() error {
+	return app.generateFile("Makefile.kind", "templates/Makefile.kind.gotmpl")
+}
+
+func (app Application) generateMakefileDebugger() error {
+	return app.generateFile("Makefile.remotedebug", "templates/Makefile.remotedebug.gotmpl")
 }
 
 func (app Application) generateMakefileVars() error {
