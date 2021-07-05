@@ -71,6 +71,7 @@ func (app Application) initializeFiles() error {
 		Application.generateDockerfile,
 		Application.generateDeployFile,
 		Application.generateReadme,
+		Application.generateGoMod,
 		Application.generateGitignore,
 		Application.generateMakefileVars,
 		Application.generateMakefileCommon,
@@ -85,8 +86,8 @@ func (app Application) initializeFiles() error {
 	}
 	if app.WithKind {
 		fileInitializers = append(fileInitializers, Application.generateMakefileKind,
-			Application.generateKindConfig,	Application.generateKindConfigYaml,
-			Application.generateKindConfigV119,	Application.generateRedisNoPassword)
+			Application.generateKindConfig, Application.generateKindConfigYaml,
+			Application.generateKindConfigV119, Application.generateRedisNoPassword)
 	}
 	if app.WithDelve {
 		fileInitializers = append(fileInitializers, Application.generateMakefileDebugger)
@@ -219,6 +220,10 @@ func (app Application) generateReadme() error {
 
 func (app Application) generateGitignore() error {
 	return app.generateFile(".gitignore", "templates/.gitignore.gotmpl")
+}
+
+func (app Application) generateGoMod() error {
+	return app.generateFile("go.mod", "templates/go.mod.gotmpl")
 }
 
 func (app Application) generateMakefile() error {
