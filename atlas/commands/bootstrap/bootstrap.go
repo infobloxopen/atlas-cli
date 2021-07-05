@@ -113,6 +113,10 @@ func (b Bootstrap) Run() error {
 		}
 	}
 
+	if err := checkDockerPermissions(); err != nil {
+		return err
+	}
+
 	if err := generateProtobuf(); err != nil {
 		return err
 	}
@@ -144,6 +148,16 @@ func runCommand(command string, args ...string) error {
 	}
 	if err := cmd.Run(); err != nil {
 		return err
+	}
+	return nil
+}
+
+// check that docker have enough permissions
+func checkDockerPermissions() error {
+	cmd := exec.Command("docker", "info")
+	if output, err := cmd.Output(); err != nil {
+		output := string(output)
+		return errors.New(output[strings.Index(output, "ERROR:"):])
 	}
 	return nil
 }
