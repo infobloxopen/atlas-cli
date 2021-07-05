@@ -14,10 +14,18 @@ spec:
       app.kubernetes.io/instance: {{ "{{" }} .Release.Name {{ "}}" }}
   template:
     metadata:
-{{- if .WithMetrics }}
       annotations:
+{{- if .WithMetrics }}
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ "{{" }} .Values.internal.port | quote {{ "}}" }}
+{{- end }}
+{{- if or .WithSubscribeTopic .WithPublishTopic }}
+        dapr.io/port: {{`"{{ .Values.dapr.listenPort }}"`}}
+        dapr.io/app-id: {{`{{ include "chart.fullname" . }}`}}
+        dapr.io/log-level: {{`{{ .Values.dapr.logLevel }}`}}
+        dapr.io/metrics-port: {{`{{ .Values.dapr.metricsPort | quote }}`}}
+        dapr.io/enabled: {{`"{{ .Values.dapr.enabled }}"`}}
+        dapr.io/protocol: "grpc"
 {{- end }}
       labels:
         app: {{ "{{" }} include "chart.fullname" . {{ "}}" }}
@@ -64,11 +72,21 @@ spec:
               protocol: {{ "{{" }} .Values.httpProtocol {{ "}}" }}
             - name: internal
               containerPort: {{ "{{" }} .Values.internal.port {{ "}}" }}
-          args: [
-{{ if .WithDatabase }}
-            "--database.dsn=$(dsn)",
-{{ end }}
-          ]
+          args:
+{{- if .WithDatabase }}
+            - "--database.dsn=$(dsn)"
+{{- end }}
+{{- if or .WithSubscribeTopic .WithPublishTopic }}
+            - "--dapr.component.name={{`{{ .Values.dapr.componentName }}`}}"
+            - "--dapr.pubsub.name={{`{{ .Values.dapr.pubsubName }}`}}"
+{{- end }}
+{{- if .WithPublishTopic }}
+            - "--dapr.grpcPort={{`{{ .Values.dapr.grpcPort }}`}}"
+            - "--dapr.publish.topic={{`{{ .Values.dapr.topics.publish }}`}}"
+{{- end }}
+{{- if .WithSubscribeTopic }}
+            - "--dapr.subscribe.topic={{`{{ .Values.dapr.topics.subscribe }}`}}"
+{{- end }}
 {{`{{- if .Values.internal.enable }}`}}
           livenessProbe:
             httpGet:

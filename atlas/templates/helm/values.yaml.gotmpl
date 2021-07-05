@@ -87,3 +87,17 @@ app:
 
 authURL:
   "{ Fill this in }"
+
+{{- if or .WithSubscribeTopic .WithPublishTopic }}
+dapr:
+  enabled: true
+  grpcPort: 50001
+  listenPort: 1500
+  metricsPort: 10090
+  logLevel: info
+  componentName: dapr-component
+  pubsubName: pubsub
+  topics:
+    publish: topic-publish
+    subscribe: topic-subscribe
+{{- end }}

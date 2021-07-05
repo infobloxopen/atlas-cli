@@ -14,20 +14,22 @@ import (
 
 // Application models the data that the templates need to render files
 type Application struct {
-	Name         string
-	Registry     string
-	Root         string
-	WithGateway  bool
-	WithDatabase bool
-	WithHealth   bool
-	WithMetrics  bool
-	WithPubsub   bool
-	WithHelm     bool
-	WithProfiler bool
-	Helm         *helm.Helm
-	ExpandName   string
-	WithKind     bool
-	WithDelve    bool
+	Name               string
+	Registry           string
+	Root               string
+	WithGateway        bool
+	WithDatabase       bool
+	WithHealth         bool
+	WithMetrics        bool
+	WithPubsub         bool
+	WithHelm           bool
+	WithProfiler       bool
+	Helm               *helm.Helm
+	ExpandName         string
+	WithKind           bool
+	WithDelve          bool
+	WithSubscribeTopic string
+	WithPublishTopic   string
 }
 
 // Initialize generates brand-new application
@@ -84,6 +86,9 @@ func (app Application) initializeFiles() error {
 		Application.generateService,
 		Application.generateServiceTest,
 	}
+	if app.WithSubscribeTopic != "" || app.WithPublishTopic != "" {
+		fileInitializers = append(fileInitializers, Application.generatePubsub, Application.generatePubsubTest)
+	}
 	if app.WithKind {
 		fileInitializers = append(fileInitializers, Application.generateMakefileKind,
 			Application.generateKindConfig, Application.generateKindConfigYaml,
@@ -139,6 +144,11 @@ func (app Application) GetDirectories() []string {
 	if app.WithKind {
 		dirnames = append(dirnames,
 			"kind",
+		)
+	}
+	if app.WithSubscribeTopic != "" || app.WithPublishTopic != "" {
+		dirnames = append(dirnames,
+			"pkg/dapr",
 		)
 	}
 	if app.WithDatabase {
@@ -272,6 +282,14 @@ func (app Application) generateServerSwagger() error {
 
 func (app Application) generateConfig() error {
 	return app.generateFile("cmd/server/config.go", "templates/cmd/server/config.go.gotmpl")
+}
+
+func (app Application) generatePubsub() error {
+	return app.generateFile("pkg/dapr/pubsub.go", "templates/pkg/dapr/pubsub.go.gotmpl")
+}
+
+func (app Application) generatePubsubTest() error {
+	return app.generateFile("pkg/dapr/pubsub_test.go", "templates/pkg/dapr/pubsub_test.go.gotmpl")
 }
 
 func (app Application) generateService() error {

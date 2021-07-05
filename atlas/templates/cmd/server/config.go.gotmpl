@@ -77,6 +77,19 @@ const (
 	defaultProfilerAddress = "0.0.0.0"
 	defaultProfilerPort    = "9999"
 	{{ end }}
+
+    {{- if or .WithPublishTopic .WithSubscribeTopic }}
+    // Dapr
+	defaultDaprComponentName  = "dapr-component"
+	defaultDaprPubsubName     = "pubsub"
+	{{- end }}
+    {{- if .WithPublishTopic }}
+    defaultDaprGrpcPort       = 50001
+	defaultDaprPublishTopic   = "{{ .WithPublishTopic }}"
+	{{- end }}
+    {{- if .WithSubscribeTopic }}
+	defaultDaprSubscribeTopic = "{{ .WithSubscribeTopic }}"
+	{{- end }}
 )
 
 var (
@@ -108,6 +121,17 @@ var (
 	flagPubsubSubscribe    = pflag.String("atlas.pubsub.subscribe", defaultPubsubSubscribe, "subscriber topic")
 	flagPubsubSubscriberID = pflag.String("atlas.pubsub.subscriber.id", defaultPubsubSubscriberID, "subscriber id")
 
+    {{ if .WithPublishTopic }}
+	flagDaprGrpcPort       = pflag.Int("dapr.grpcPort", defaultDaprGrpcPort, "port of dapr sidecar that receives pubsub messages")
+	flagDaprPublishTopic   = pflag.String("dapr.publish.topic", defaultDaprPublishTopic, "topic where dapr publish the new messages")
+	{{ end }}
+    {{ if .WithSubscribeTopic }}
+	flagDaprSubscribeTopic = pflag.String("dapr.subscribe.topic", defaultDaprSubscribeTopic, "topic name the dapr is subscribed to")
+	{{ end }}
+    {{ if or .WithPublishTopic .WithSubscribeTopic }}
+	flagDaprComponentName  = pflag.String("dapr.component.name", defaultDaprComponentName, "the dapr pubsub component name to subscribe to")
+	flagDaprPubsubName     = pflag.String("dapr.pubsub.name", defaultDaprPubsubName, "the dapr pubsub name")
+	{{ end }}
 
 	flagAuthzEnable  = pflag.Bool("atlas.authz.enable", defaultAuthzEnable, "enable application with authorization")
 	flagAuthzAddress = pflag.String("atlas.authz.address", defaultAuthzAddress, "address or FQDN of the authorization service")
