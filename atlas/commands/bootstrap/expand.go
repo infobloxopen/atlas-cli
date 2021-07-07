@@ -3,8 +3,6 @@ package bootstrap
 import (
 	"bufio"
 	"fmt"
-	"github.com/infobloxopen/atlas-cli/atlas/templates"
-	"github.com/jinzhu/inflection"
 	"io"
 	"log"
 	"os"
@@ -13,6 +11,8 @@ import (
 	"text/template"
 
 	"github.com/iancoleman/strcase"
+	"github.com/infobloxopen/atlas-cli/atlas/templates"
+	"github.com/jinzhu/inflection"
 )
 
 type finalTemplate struct {
@@ -93,7 +93,9 @@ func expandResource(appName, expandName string, withDatabase bool) error {
 		log.Fatalf("failed to create cmd/server/servers.go\n%s\n", err)
 	}
 
-	os.MkdirAll("db/migration", os.ModePerm)
+	if err := os.MkdirAll("db/migration", os.ModePerm); err != nil {
+		log.Fatalf("failed to create %q: %v", "db/migration", err)
+	}
 
 	for _, res := range r {
 		err = runTemplate([]templateResource{res}, appName, withDatabase,
