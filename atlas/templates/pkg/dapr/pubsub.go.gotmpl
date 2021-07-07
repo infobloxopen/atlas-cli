@@ -1,0 +1,93 @@
+package dapr
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"time"
+
+	commonv1pb "github.com/dapr/go-sdk/dapr/proto/common/v1"
+	daprpb "github.com/dapr/go-sdk/dapr/proto/runtime/v1"
+	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/jinzhu/gorm"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+)
+
+type PubSub struct {
+	Logger         *logrus.Logger
+	client         daprpb.DaprClient
+	// It can be used more than one subscription; in that case OnTopicEvent and ListTopicSubscriptions functions should be updated
+	TopicSubscribe string
+	Name           string
+}
+
+func NewPublisher(port int, pubsubName string) (daprpb.DaprClient, error) {
+	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", port), grpc.WithInsecure())
+	if err != nil {
+		return nil, fmt.Errorf("failed to open atlas pubsub connection: %v", err)
+	}
+	return daprpb.NewDaprClient(conn), nil
+}
+
+func InitPubsub(topic string, pubsubName string, grpcPort int, log *logrus.Logger) (*PubSub, error) {
+    var err error
+    ps := &PubSub {
+        Logger:         log,
+        TopicSubscribe: topic,
+        Name:           pubsubName,
+    }
+    if grpcPort > 0 {
+        if ps.client, err = NewPublisher(grpcPort, pubsubName); err != nil {
+            return nil, err
+        }
+    }
+    return ps, err
+}
+
+func (p *PubSub) Publish(topic string, msg []byte) error {
+	if p.client == nil {
+		return errors.New("Client is not initialized")
+	}
+
+	_, err := p.client.PublishEvent(context.Background(), &daprpb.PublishEventRequest{
+		Topic:      topic,
+		Data:       msg,
+		PubsubName: p.Name,
+	})
+	return err
+}
+
+func (e *PubSub) OnInvoke(ctx context.Context, in *commonv1pb.InvokeRequest) (*commonv1pb.InvokeResponse, error) {
+	return nil, nil
+}
+
+func (p *PubSub) ListTopicSubscriptions(ctx context.Context, in *empty.Empty) (*daprpb.ListTopicSubscriptionsResponse, error) {
+	return &daprpb.ListTopicSubscriptionsResponse{
+		Subscriptions: []*daprpb.TopicSubscription{
+			{Topic: p.TopicSubscribe, PubsubName: p.Name},
+		},
+	}, nil
+}
+
+func (p *PubSub) ListInputBindings(ctx context.Context, in *empty.Empty) (*daprpb.ListInputBindingsResponse, error) {
+	return &daprpb.ListInputBindingsResponse{}, nil
+}
+
+func (p *PubSub) OnBindingEvent(ctx context.Context, in *daprpb.BindingEventRequest) (*daprpb.BindingEventResponse, error) {
+	return &daprpb.BindingEventResponse{}, nil
+}
+
+func (p *PubSub) OnTopicEvent(ctx context.Context, in *daprpb.TopicEventRequest) (*daprpb.TopicEventResponse, error) {
+	p.Logger.Debugf("Topic message arrived: %+v", in)
+	if in == nil {
+		return nil, nil
+	}
+	switch (in.Topic) {
+	case p.TopicSubscribe:
+		p.Logger.Infof("Receive new message: %v", in.GetData())
+	default:
+		p.Logger.Errorf("Invalid topic provided: %v", in.Topic)
+	}
+	return &daprpb.TopicEventResponse{}, nil
+}

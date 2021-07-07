@@ -1,0 +1,302 @@
+package dapr
+
+import (
+	"context"
+	"reflect"
+	"testing"
+
+	commonv1pb "github.com/dapr/go-sdk/dapr/proto/common/v1"
+	daprpb "github.com/dapr/go-sdk/dapr/proto/runtime/v1"
+	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/sirupsen/logrus"
+)
+
+func TestInitPubsub(t *testing.T) {
+	type args struct {
+		topic      string
+		pubsubName string
+		grpcPort   int
+		log        *logrus.Logger
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *PubSub
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := InitPubsub(tt.args.topic, tt.args.pubsubName, tt.args.grpcPort, tt.args.log)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("InitPubsub() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("InitPubsub() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewPublisher(t *testing.T) {
+	type args struct {
+		port       int
+		pubsubName string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    daprpb.DaprClient
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewPublisher(tt.args.port, tt.args.pubsubName)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewPublisher() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewPublisher() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPubSub_ListInputBindings(t *testing.T) {
+	type fields struct {
+		Logger         *logrus.Logger
+		client         daprpb.DaprClient
+		TopicSubscribe string
+		Name           string
+	}
+	type args struct {
+		ctx context.Context
+		in  *empty.Empty
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *daprpb.ListInputBindingsResponse
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &PubSub{
+				Logger:         tt.fields.Logger,
+				client:         tt.fields.client,
+				TopicSubscribe: tt.fields.TopicSubscribe,
+				Name:           tt.fields.Name,
+			}
+			got, err := p.ListInputBindings(tt.args.ctx, tt.args.in)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ListInputBindings() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ListInputBindings() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPubSub_ListTopicSubscriptions(t *testing.T) {
+	type fields struct {
+		Logger         *logrus.Logger
+		client         daprpb.DaprClient
+		TopicSubscribe string
+		Name           string
+	}
+	type args struct {
+		ctx context.Context
+		in  *empty.Empty
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *daprpb.ListTopicSubscriptionsResponse
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &PubSub{
+				Logger:         tt.fields.Logger,
+				client:         tt.fields.client,
+				TopicSubscribe: tt.fields.TopicSubscribe,
+				Name:           tt.fields.Name,
+			}
+			got, err := p.ListTopicSubscriptions(tt.args.ctx, tt.args.in)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ListTopicSubscriptions() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ListTopicSubscriptions() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPubSub_OnBindingEvent(t *testing.T) {
+	type fields struct {
+		Logger         *logrus.Logger
+		client         daprpb.DaprClient
+		TopicSubscribe string
+		Name           string
+	}
+	type args struct {
+		ctx context.Context
+		in  *daprpb.BindingEventRequest
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *daprpb.BindingEventResponse
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &PubSub{
+				Logger:         tt.fields.Logger,
+				client:         tt.fields.client,
+				TopicSubscribe: tt.fields.TopicSubscribe,
+				Name:           tt.fields.Name,
+			}
+			got, err := p.OnBindingEvent(tt.args.ctx, tt.args.in)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("OnBindingEvent() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("OnBindingEvent() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPubSub_OnInvoke(t *testing.T) {
+	type fields struct {
+		Logger         *logrus.Logger
+		client         daprpb.DaprClient
+		TopicSubscribe string
+		Name           string
+	}
+	type args struct {
+		ctx context.Context
+		in  *commonv1pb.InvokeRequest
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *commonv1pb.InvokeResponse
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &PubSub{
+				Logger:         tt.fields.Logger,
+				client:         tt.fields.client,
+				TopicSubscribe: tt.fields.TopicSubscribe,
+				Name:           tt.fields.Name,
+			}
+			got, err := e.OnInvoke(tt.args.ctx, tt.args.in)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("OnInvoke() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("OnInvoke() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPubSub_OnTopicEvent(t *testing.T) {
+	type fields struct {
+		Logger         *logrus.Logger
+		client         daprpb.DaprClient
+		TopicSubscribe string
+		Name           string
+	}
+	type args struct {
+		ctx context.Context
+		in  *daprpb.TopicEventRequest
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *daprpb.TopicEventResponse
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &PubSub{
+				Logger:         tt.fields.Logger,
+				client:         tt.fields.client,
+				TopicSubscribe: tt.fields.TopicSubscribe,
+				Name:           tt.fields.Name,
+			}
+			got, err := p.OnTopicEvent(tt.args.ctx, tt.args.in)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("OnTopicEvent() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("OnTopicEvent() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPubSub_Publish(t *testing.T) {
+	type fields struct {
+		Logger         *logrus.Logger
+		client         daprpb.DaprClient
+		TopicSubscribe string
+		Name           string
+	}
+	type args struct {
+		topic string
+		msg   []byte
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &PubSub{
+				Logger:         tt.fields.Logger,
+				client:         tt.fields.client,
+				TopicSubscribe: tt.fields.TopicSubscribe,
+				Name:           tt.fields.Name,
+			}
+			if err := p.Publish(tt.args.topic, tt.args.msg); (err != nil) != tt.wantErr {
+				t.Errorf("Publish() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
