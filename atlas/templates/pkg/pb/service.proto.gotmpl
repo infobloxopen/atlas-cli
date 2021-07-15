@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package service;
+package {{ .Name | Package }};
 
 import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
