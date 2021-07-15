@@ -13,8 +13,7 @@ var (
 	errMissingGOPATH      = formatError{"$GOPATH environment variable not set"}
 )
 
-// ServiceName takes a string and formats it into a valid gRPC service name
-func ServiceName(str string) (string, error) {
+func serviceNameHelper(str string) (string, error) {
 	if len(str) < 1 {
 		return str, errEmptyServiceName
 	}
@@ -27,6 +26,17 @@ func ServiceName(str string) (string, error) {
 		fields[i] = strings.Title(fields[i])
 	}
 	return strings.Join(fields, ""), nil
+}	
+
+// PackageName takes a string and formats it into a valid proto package name
+func PackageName(str string) (string, error) {
+	formatStr, err := serviceNameHelper(str)
+	return strings.ToLower(formatStr), err
+}
+
+// ServiceName takes a string and formats it into a valid gRPC service name
+func ServiceName(str string) (string, error) {
+	return serviceNameHelper(str)
 }
 
 // DatabaseName generates the name of the application's database
