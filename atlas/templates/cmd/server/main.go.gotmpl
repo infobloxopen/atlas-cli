@@ -177,7 +177,7 @@ func init() {
 }
 
 {{ if .WithGateway -}}
-func forwardResponseOption(ctx context.Context, w http.ResponseWriter, resp proto.Message) error {
+func forwardResponseOption(ctx context.Context, w http.ResponseWriter, resp protoreflect.ProtoMessage) error {
 	w.Header().Set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
 	return nil
 }
