@@ -14,6 +14,9 @@ jobs:
     timeout-minutes: 20
     env:
       HELM_VERSION: v2.14.3
+    defaults:
+      run:
+        working-directory: ./src/github.com/${{ github.repository }}
     steps:
       - uses: actions/setup-go@v2
         with:
@@ -30,17 +33,24 @@ jobs:
         with:
           path: |
             ~/go/pkg/mod
-            ${{ github.workspace }}/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
       - run: echo ${{ github.workspace }}/bin >> $GITHUB_PATH
+      - run: make templating
+      - name: Lint Code
+        uses: golangci/golangci-lint-action@v2
+        with:
+          working-directory: ./src/github.com/${{ github.repository }}
       - name: Test
-        working-directory: ./src/github.com/${{ github.repository }}
         env:
           GOPATH: ${{ github.workspace }}
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-          make test-with-integration ${{ github.event.inputs.make-flags }}
+          make test-with-integration ${{ github.event.inputs.make-flags }} skip_teardown=true
+      - name: Lint Generated Code
+        uses: golangci/golangci-lint-action@v2
+        with:
+          working-directory: ./src/github.com/${{ github.repository }}/atlas/test
