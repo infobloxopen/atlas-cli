@@ -33,7 +33,9 @@ GO_PACKAGES             ?= $(shell go list ./... | grep -v vendor)
 
 
 PROTOBUF_ARGS =  -I=$(PROJECT_ROOT)/vendor
-PROTOBUF_ARGS += --go_out=plugins=grpc:.
+PROTOBUF_ARGS += --go_out=.
+PROTOBUF_ARGS += --go-grpc_out=.
+PROTOBUF_ARGS += --go-grpc_opt require_unimplemented_servers=false
 PROTOBUF_ARGS += --validate_out="lang=go:."
 WITH_DATABASE ?= false
 WITH_GATEWAY  ?= false
@@ -51,10 +53,13 @@ PROTOBUF_ARGS += --gorm_out=.
 endif
 
 ifeq ($(WITH_GATEWAY), true)
-PROTOBUF_ARGS += --grpc-gateway_out="logtostderr=true,allow_delete_body=true:."
-PROTOBUF_ARGS += --swagger_out="atlas_patch=true,allow_delete_body=true:."
+PROTOBUF_ARGS += --grpc-gateway_out=.
+PROTOBUF_ARGS += --grpc-gateway_opt logtostderr=true,allow_delete_body=true
+PROTOBUF_ARGS += --openapiv2_out=.
+PROTOBUF_ARGS += --openapiv2_opt allow_delete_body=true,atlas_patch=true,json_names_for_fields=false
 else ifeq ($(WITH_EXPAND), true)
-PROTOBUF_ARGS += --grpc-gateway_out=logtostderr=true:.
+PROTOBUF_ARGS += --grpc-gateway_out=.
+PROTOBUF_ARGS += --grpc-gateway_opt logtostderr=true
 endif
 
 .PHONY all: all-atlas

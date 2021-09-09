@@ -5,17 +5,19 @@ import (
 	"flag"
 	"net"
 
-	{{ if .WithGateway }}"github.com/golang/protobuf/proto"{{ end }}
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	{{- if .WithMetrics }}
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	{{- end }}
+	{{ if .WithGateway }}"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"{{ end }}
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	{{ if .WithPubsub }}"google.golang.org/grpc"{{ end }}
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	{{ if .WithGateway }}"github.com/infobloxopen/atlas-app-toolkit/gateway"{{ end }}
 	{{ if .WithGateway }}"github.com/infobloxopen/atlas-app-toolkit/requestid"{{ end }}
