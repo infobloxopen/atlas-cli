@@ -5,12 +5,11 @@ run: templating
 	go run ./atlas/
 
 .bindata:
-	go get -u github.com/go-bindata/go-bindata/...
+	go install github.com/go-bindata/go-bindata/go-bindata@v3
 	touch $@
 
 templating: .bindata
-	@cd atlas/ && rm -f templates/template-bindata.go && go generate
-	@go fmt atlas/templates/template-bindata.go
+	@cd atlas/ && rm -f templates/template-bindata.go && go generate && go fmt templates/template-bindata.go
 
 test:
 	@go test -v ./...
