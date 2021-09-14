@@ -23,10 +23,10 @@ SERVER_DOCKERFILE       := $(DOCKERFILE_PATH)/Dockerfile
 # configuration for the protobuf gentool
 SRCROOT_ON_HOST         := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 SRCROOT_IN_CONTAINER    := /go/src/$(PROJECT_ROOT)
-DOCKER_RUNNER           ?= docker run --rm -u `id -u`:`id -g` -e GOCACHE=/go -e CGO_ENABLED=0
-DOCKER_RUNNER           += -v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
+DOCKER_RUNNER_VARS           ?= docker run --rm -u `id -u`:`id -g` -e GOCACHE=/go -e CGO_ENABLED=0
+DOCKER_RUNNER_VARS           += -v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
 DOCKER_GENERATOR        := infoblox/atlas-gentool:latest
-GENERATOR               := $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
+GENERATOR               := $(DOCKER_RUNNER_VARS) $(DOCKER_GENERATOR)
 {{ if .WithDatabase }}
 # configuration for the database
 WITH_DATABASE           = true
