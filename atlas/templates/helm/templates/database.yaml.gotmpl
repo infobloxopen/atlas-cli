@@ -2,67 +2,67 @@
 apiVersion: v1
 kind: Service
 metadata:
-    name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-postgres
-    namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
-    labels:
-        app.kubernetes.io/name: postgres
-        app.kubernetes.io/part-of: {{ .Name }}
-        app.kubernetes.io/component: database
+  name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-postgres
+  namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: {{ .Name }}
+    app.kubernetes.io/component: database
 spec:
-    ports:
-        - port: {{ "{{" }} .Values.postgres.port {{ "}}" }}
-    selector:
-        app.kubernetes.io/name: postgres
+  ports:
+    - port: {{ "{{" }} .Values.postgres.port {{ "}}" }}
+  selector:
+    app.kubernetes.io/name: postgres
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-postgres
-    namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
-    labels:
+  name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-postgres
+  namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: {{ .Name }}
+    app.kubernetes.io/component: database
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgres
+  template:
+    metadata:
+      labels:
         app.kubernetes.io/name: postgres
         app.kubernetes.io/part-of: {{ .Name }}
         app.kubernetes.io/component: database
-spec:
-    selector:
-        matchLabels:
-            app.kubernetes.io/name: postgres
-    template:
-        metadata:
-            labels:
-                app.kubernetes.io/name: postgres
-                app.kubernetes.io/part-of: {{ .Name }}
-                app.kubernetes.io/component: database
-        spec:
-            containers:
-                - name: postgres
-                  image: {{ "{{" }} .Values.postgres.image {{ "}}" }}:{{ "{{" }} .Values.postgres.version {{ "}}" }}
-                  env:
-                      - name: POSTGRES_USER
-                        value: {{ "{{" }} .Values.db.username {{ "}}" }}
-                      - name: POSTGRES_PASSWORD
-                        valueFrom:
-                          secretKeyRef:
-                            name: {{ "{{" }}  include "chart.fullname" . {{ "}}" }}-db-key
-                            key: password
-                      - name: POSTGRES_DB
-                        value: {{ "{{" }} .Values.db.database {{ "}}" }}
-                  ports:
-                      - containerPort: {{ "{{" }} .Values.postgres.port {{ "}}" }}
-                  livenessProbe:
-                      initialDelaySeconds: 20
-                      exec:
-                          command:
-                              - "/bin/sh"
-                              - "-i"
-                              - "-c"
-                              - "pg_isready -h 127.0.0.1 -p 5432 -U $POSTGRES_USER"
-                  readinessProbe:
-                      initialDelaySeconds: 5
-                      exec:
-                          command:
-                              - "/bin/sh"
-                              - "-i"
-                              - "-c"
-                              - "psql -h 127.0.0.1 -U $POSTGRES_USER -q -d $POSTGRES_PASSWORD -c 'SELECT 1'"
+    spec:
+      containers:
+        - name: postgres
+          image: "{{ "{{" }} .Values.postgres.image {{ "}}" }}:{{ "{{" }} .Values.postgres.version {{ "}}" }}"
+          env:
+            - name: POSTGRES_USER
+            value: {{ "{{" }} .Values.db.username {{ "}}" }}
+            - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+              name: {{ "{{" }}  include "chart.fullname" . {{ "}}" }}-db-key
+              key: password
+            - name: POSTGRES_DB
+            value: {{ "{{" }} .Values.db.database {{ "}}" }}
+          ports:
+            - containerPort: {{ "{{" }} .Values.postgres.port {{ "}}" }}
+          livenessProbe:
+            initialDelaySeconds: 20
+            exec:
+              command:
+                - "/bin/sh"
+                - "-i"
+                - "-c"
+                - "pg_isready -h 127.0.0.1 -p 5432 -U $POSTGRES_USER"
+          readinessProbe:
+            initialDelaySeconds: 5
+            exec:
+              command:
+                - "/bin/sh"
+                - "-i"
+                - "-c"
+                - "psql -h 127.0.0.1 -U $POSTGRES_USER -q -d $POSTGRES_PASSWORD -c 'SELECT 1'"
 {{ "{{" }} end {{ "}}" }}
