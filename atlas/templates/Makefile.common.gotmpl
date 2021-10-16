@@ -20,7 +20,7 @@ SERVER_DOCKERFILE       ?= $(DOCKERFILE_PATH)/Dockerfile
 # configuration for the protobuf gentool
 SRCROOT_ON_HOST         ?= $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 SRCROOT_IN_CONTAINER    ?= /go/src/$(PROJECT_ROOT)
-DOCKER_RUNNER           ?= docker run --rm -u `id -u`:`id -g` -e CGO_ENABLED=0  -w $(SRCROOT_IN_CONTAINER)-v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
+DOCKER_RUNNER           ?= docker run --rm -e CGO_ENABLED=0 -w $(SRCROOT_IN_CONTAINER) -v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
 DOCKER_GENERATOR        ?= infoblox/atlas-gentool:latest
 GENERATOR               ?= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
 
