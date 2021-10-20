@@ -10,11 +10,11 @@ spec:
   ports:
     - name: grpc
       port: {{ "{{" }} .Values.service.grpcPort {{ "}}" }}
-      targetPort: {{ "{{" }} .Values.app.grpcPort {{ "}}" }}
+      targetPort: grpc
       protocol: {{ "{{" }} .Values.grpcProtocol {{ "}}" }}
     - name: http
       port: {{ "{{" }} .Values.service.httpPort {{ "}}" }}
-      targetPort: {{ "{{" }} .Values.app.httpPort {{ "}}" }}
+      targetPort: http
       protocol: {{ "{{" }} .Values.httpProtocol {{ "}}" }}
   selector:
     app: {{ "{{" }} include "chart.fullname" . {{ "}}" }}

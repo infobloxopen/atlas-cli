@@ -4,8 +4,6 @@
 PROJECT_ROOT            ?= $(PWD)
 BUILD_PATH              ?= bin
 DOCKERFILE_PATH         ?= $(CURDIR)/docker
-GO_IMAGE 				?= golang:1.16-alpine
-GO_RUNNER 				?= $(DOCKER_RUNNER) $(GO_IMAGE)
 
 # configuration for image names
 USERNAME                ?= $(USER)
@@ -20,15 +18,19 @@ SERVER_DOCKERFILE       ?= $(DOCKERFILE_PATH)/Dockerfile
 # configuration for the protobuf gentool
 SRCROOT_ON_HOST         ?= $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 SRCROOT_IN_CONTAINER    ?= /go/src/$(PROJECT_ROOT)
-DOCKER_RUNNER           ?= docker run --rm -u `id -u`:`id -g` -e CGO_ENABLED=0  -w $(SRCROOT_IN_CONTAINER)-v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
+DOCKER_RUNNER           ?= docker run --rm -u `id -u`:`id -g` -e GOCACHE=/go -e CGO_ENABLED=0 -v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
 DOCKER_GENERATOR        ?= infoblox/atlas-gentool:latest
 GENERATOR               ?= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
+
+# configuration for building Go with Docker
+GO_IMAGE                ?= golang:1.16-alpine
+GO_RUNNER               ?= $(DOCKER_RUNNER) -w $(SRCROOT_IN_CONTAINER) $(GO_IMAGE)
 
 # configuration for building on host machine
 export GOFLAGS          ?= -mod=vendor
 GO_CACHE                ?= -pkgdir $(BUILD_PATH)/go-cache
 GO_BUILD_FLAGS          ?= $(GO_CACHE) -i -v
-GO_TEST_FLAGS           ?= -v -cover 
+GO_TEST_FLAGS           ?= -v -cover
 GO_PACKAGES             ?= $(shell go list ./... | grep -v vendor)
 
 

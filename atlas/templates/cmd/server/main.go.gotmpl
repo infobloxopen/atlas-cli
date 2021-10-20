@@ -130,6 +130,12 @@ func ServeExternal(logger *logrus.Logger) error {
 		{{ if .WithGateway -}}
 		server.WithGateway(
 			gateway.WithGatewayOptions(
+				runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+					MarshalOptions: protojson.MarshalOptions{
+						UseProtoNames: true,
+						EmitUnpopulated: false,
+					},
+				}),
 				runtime.WithForwardResponseOption(forwardResponseOption),
 				runtime.WithIncomingHeaderMatcher(gateway.AtlasDefaultHeaderMatcher()),
 			),
