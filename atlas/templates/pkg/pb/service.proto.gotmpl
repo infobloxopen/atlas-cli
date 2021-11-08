@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package service;
+package {{ .Name | Package }};
 
 import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
 import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
-import "protoc-gen-swagger/options/annotations.proto";{{ if or .ExpandName .WithDatabase }}
-import "github.com/infobloxopen/protoc-gen-gorm/options/gorm.proto";{{ end }}
+import "protoc-gen-openapiv2/options/annotations.proto";{{ if or .ExpandName .WithDatabase }}
+import "github.com/infobloxopen/protoc-gen-gorm/proto/options/gorm.proto";{{ end }}
 {{ if .ExpandName }}
 import "google/protobuf/field_mask.proto";
 //import "github.com/infobloxopen/protoc-gen-gorm/types/types.proto";

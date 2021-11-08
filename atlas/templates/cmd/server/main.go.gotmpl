@@ -5,17 +5,19 @@ import (
 	"flag"
 	"net"
 
-	{{ if .WithGateway }}"github.com/golang/protobuf/proto"{{ end }}
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	{{- if .WithMetrics }}
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	{{- end }}
+	{{ if .WithGateway }}"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"{{ end }}
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	{{ if .WithPubsub }}"google.golang.org/grpc"{{ end }}
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	{{ if .WithGateway }}"github.com/infobloxopen/atlas-app-toolkit/gateway"{{ end }}
 	{{ if .WithGateway }}"github.com/infobloxopen/atlas-app-toolkit/requestid"{{ end }}
@@ -135,6 +137,12 @@ func ServeExternal(logger *logrus.Logger{{ if or .WithPublishTopic .WithSubscrib
 		{{ if .WithGateway -}}
 		server.WithGateway(
 			gateway.WithGatewayOptions(
+				runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+					MarshalOptions: protojson.MarshalOptions{
+						UseProtoNames: true,
+						EmitUnpopulated: false,
+					},
+				}),
 				runtime.WithForwardResponseOption(forwardResponseOption),
 				runtime.WithIncomingHeaderMatcher(gateway.AtlasDefaultHeaderMatcher()),
 			),
@@ -184,7 +192,7 @@ func init() {
 }
 
 {{ if .WithGateway -}}
-func forwardResponseOption(ctx context.Context, w http.ResponseWriter, resp proto.Message) error {
+func forwardResponseOption(ctx context.Context, w http.ResponseWriter, resp protoreflect.ProtoMessage) error {
 	w.Header().Set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
 	return nil
 }

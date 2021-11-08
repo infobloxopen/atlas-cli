@@ -7,36 +7,6 @@ This command-line tool helps developers become productive on Atlas. It aims to p
 ## Getting Started
 These instructions will help you get the Atlas command-line tool up and running on your machine.
 
-### Prerequisites
-Please install the following dependencies before running the Atlas command-line tool.
-
-#### protoc-gen-go
-Protobuf generator for go
-
-```sh
-go get -u github.com/golang/protobuf/protoc-gen-go
-```
-For more details visit [protoc-gen-go](https://developers.google.com/protocol-buffers/docs/gotutorial).
-
-#### dep
-
-This is a dependency management tool for Go. You can install `dep` with Homebrew:
-
-```sh
-$ brew install dep
-```
-More detailed installation instructions are available on the [GitHub repository](https://github.com/golang/dep).
-
-#### golang-migrate
-Bootstrapped applications use [golang-migrate](https://github.com/golang-migrate/migrate) for database migrations. You can install the `migrate` binary with the standard Go toolchain:
-
-```
-$ go get -u -d github.com/golang-migrate/migrate/cli github.com/lib/pq
-$ apt install libc6-dev    #it is necessary for a successful build
-$ go build -tags 'postgres' -o /usr/local/bin/migrate github.com/golang-migrate/migrate/cli
-```
-See the official golang-migrate [GitHub repository](https://github.com/golang-migrate/migrate) for more information about this tool.
-
 ### Installing
 The following steps will install the `atlas` binary to your `$GOBIN` directory.
 
@@ -64,12 +34,12 @@ Here's the full set of flags for the `init-app` command.
 | Flag          | Description                                                                                                   | Required      | Default Value |
 | ------------- | ------------------------------------------------------------------------------------------------------------- | ------------- | ------------- |
 | `name`        | The name of the new application                                                                               | Yes           | N/A           |
+| `registry`    | The Docker registry where application images are pushed                                                       | No            | `""`          |
 | `db`          | Bootstrap the application with PostgreSQL database integration                                                | No            | `false`       |
 | `gateway`     | Initialize the application with a gRPC gateway                                                                | No            | `false`       |
 | `health`      | Initialize the application with internal health checks                                                        | No            | `false`       |
 | `metrics`     | Initialize the application with gRPC Prometheus metrics                                                       | No            | `true`        |
 | `pubsub`      | Initialize the application with a atlas-pubsub example                                                        | No            | `false`       |
-| `registry`    | The Docker registry where application images are pushed                                                       | No            | `""`          |
 | `helm`        | Initialize the application with helm charts                                                                   | No            | `false`       |
 | `expand`      | Initialize the application with additional services based on a file                                           | No            | `""`          |
 | `kind`        | initialize the application with KinD support (optional, only applicable when helm charts are enabled)         | No            | `false`       |
@@ -81,7 +51,7 @@ You can run `atlas init-app --help` to see these flags and their descriptions on
 
 
 ```sh
-# generates an application with a grpc gateway 
+# generates an application with a grpc gateway
 atlas init-app -name=my-application -gateway
 ```
 
@@ -97,19 +67,19 @@ atlas init-app -name=my-application -registry=infoblox
 
 ```sh
 # generates an application with additional services
-# the input file (expand.txt in the example below) 
+# the input file (expand.txt in the example below)
 #   is a list of strings (letters only), one service name on each line
 atlas init-app -name=my-application -expand=expand.txt -db=true
 ```
 
 ```sh
 # example `expand.txt` file for use with -expand option
-# Each line must either be a single string of letters only, 
+# Each line must either be a single string of letters only,
 # or two strings separated by a single comma. The latter option
 # Is for the use case where the user wants a customized pluralization
-# of a word. In the example below, "Artifacts" will pluralize to 
+# of a word. In the example below, "Artifacts" will pluralize to
 # "Artifactss", and "Kubernetes" will pluralize to "KubeCluster"
-# In general, the best practice for object names should be 
+# In general, the best practice for object names should be
 # either <singular> or <singular,plural>
 
 Artifacts
@@ -129,7 +99,7 @@ image-name:image-version
 ```
 
 ### Pubsub Example
-To run the pubsub example ensure you run the application with the correct configuration by passing the pubsub server address. 
+To run the pubsub example ensure you run the application with the correct configuration by passing the pubsub server address.
 For more info  [atlas-pubsub](https://github.com/infobloxopen/atlas-pubsub)
 ```sh
 # generates an application with a pubsub example
@@ -167,7 +137,7 @@ echo "$(minikube ip) minikube.local" > /etc/hosts
  ```sh
  echo "$(minikube ip) minikube.local" | sudo tee -a /etc/hosts
  ```
- 
+
  After that you can run targets from Makefile
 ```sh
 make helm-install # to install your app in minikube
@@ -177,35 +147,35 @@ and get access to API through `minikube.local`. For example
 ```sh
 curl minikube.local/NAME_YOUR_APP/v1/version
 ```
- 
+
 ## Viper Configuration
 
 Generated atlas projects use [viper](https://github.com/spf13/viper), a complete configuration solution that allows an application to run from different environments. Viper also provides precedence order which is in the order as below.
 
-#### Running from Default Values 
-By default if you don't change anything your application will run with the values in config.go 
-#### Running from Flags 
+#### Running from Default Values
+By default if you don't change anything your application will run with the values in config.go
+#### Running from Flags
 ```
 go run cmd/server/*.go --database.port 5432
 ```
-#### Running from Environment Variables 
+#### Running from Environment Variables
 ```
 export DATABASE_PORT=5432
 go run cmd/server/*.go
 ```
 #### Running from Config file  
-Change the configuration for defaultConfigDirectory and defaultConfigFile to point to your configuration file. 
-You can either change it in config.go, passing it as environment variables, or flags. 
+Change the configuration for defaultConfigDirectory and defaultConfigFile to point to your configuration file.
+You can either change it in config.go, passing it as environment variables, or flags.
 
 ```
-go run cmd/server/*.go --config.source "some/path/" --config.file "config_file.yaml" 
+go run cmd/server/*.go --config.source "some/path/" --config.file "config_file.yaml"
 ```
 
 
-### Manually adding Viper 
+### Manually adding Viper
 1. Copy  [config.go](./atlas/config.gotmpl) and add it to your project under cmd/server/config.go
-2. Update config.go by setting all your default values 
-3. Add the following snippet of code inside your main.go that will allow you to initilize all the viper configuration. 
+2. Update config.go by setting all your default values
+3. Add the following snippet of code inside your main.go that will allow you to initilize all the viper configuration.
 ```go
 func init() {
 	pflag.Parse()
@@ -230,7 +200,7 @@ func init() {
 ```go
 // Retrieving a string
 viper.GetString("database.address")
-// Retrieving a bool 
+// Retrieving a bool
 viper.GetBool("database.enable")
 ```
 

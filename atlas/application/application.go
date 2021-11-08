@@ -172,6 +172,7 @@ func (app Application) generateFile(filename, templatePath string) error {
 		"Service":  utill.ServiceName,
 		"URL":      utill.ServerURL,
 		"Database": utill.DatabaseName,
+		"Package":  utill.PackageName,
 	})
 	bytes, err := templates.Asset(templatePath)
 	if err != nil {

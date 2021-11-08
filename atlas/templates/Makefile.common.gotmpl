@@ -4,8 +4,6 @@
 PROJECT_ROOT            ?= $(PWD)
 BUILD_PATH              ?= bin
 DOCKERFILE_PATH         ?= $(CURDIR)/docker
-GO_IMAGE 				?= golang:1.16-alpine
-GO_RUNNER 				?= $(DOCKER_RUNNER) $(GO_IMAGE)
 
 # configuration for image names
 USERNAME                ?= $(USER)
@@ -20,20 +18,26 @@ SERVER_DOCKERFILE       ?= $(DOCKERFILE_PATH)/Dockerfile
 # configuration for the protobuf gentool
 SRCROOT_ON_HOST         ?= $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 SRCROOT_IN_CONTAINER    ?= /go/src/$(PROJECT_ROOT)
-DOCKER_RUNNER           ?= docker run --rm -u `id -u`:`id -g` -e CGO_ENABLED=0  -w $(SRCROOT_IN_CONTAINER)-v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
+DOCKER_RUNNER           ?= docker run --rm -u `id -u`:`id -g` -e GOCACHE=/go -e CGO_ENABLED=0 -v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
 DOCKER_GENERATOR        ?= infoblox/atlas-gentool:latest
 GENERATOR               ?= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
+
+# configuration for building Go with Docker
+GO_IMAGE                ?= golang:1.16-alpine
+GO_RUNNER               ?= $(DOCKER_RUNNER) -w $(SRCROOT_IN_CONTAINER) $(GO_IMAGE)
 
 # configuration for building on host machine
 export GOFLAGS          ?= -mod=vendor
 GO_CACHE                ?= -pkgdir $(BUILD_PATH)/go-cache
 GO_BUILD_FLAGS          ?= $(GO_CACHE) -i -v
-GO_TEST_FLAGS           ?= -v -cover 
+GO_TEST_FLAGS           ?= -v -cover
 GO_PACKAGES             ?= $(shell go list ./... | grep -v vendor)
 
 
 PROTOBUF_ARGS =  -I=$(PROJECT_ROOT)/vendor
-PROTOBUF_ARGS += --go_out=plugins=grpc:.
+PROTOBUF_ARGS += --go_out=.
+PROTOBUF_ARGS += --go-grpc_out=.
+PROTOBUF_ARGS += --go-grpc_opt require_unimplemented_servers=false
 PROTOBUF_ARGS += --validate_out="lang=go:."
 WITH_DATABASE ?= false
 WITH_GATEWAY  ?= false
@@ -51,10 +55,13 @@ PROTOBUF_ARGS += --gorm_out=.
 endif
 
 ifeq ($(WITH_GATEWAY), true)
-PROTOBUF_ARGS += --grpc-gateway_out="logtostderr=true,allow_delete_body=true:."
-PROTOBUF_ARGS += --swagger_out="atlas_patch=true,allow_delete_body=true:."
+PROTOBUF_ARGS += --grpc-gateway_out=.
+PROTOBUF_ARGS += --grpc-gateway_opt logtostderr=true,allow_delete_body=true
+PROTOBUF_ARGS += --openapiv2_out=.
+PROTOBUF_ARGS += --openapiv2_opt allow_delete_body=true,atlas_patch=true,json_names_for_fields=false
 else ifeq ($(WITH_EXPAND), true)
-PROTOBUF_ARGS += --grpc-gateway_out=logtostderr=true:.
+PROTOBUF_ARGS += --grpc-gateway_out=.
+PROTOBUF_ARGS += --grpc-gateway_opt logtostderr=true
 endif
 
 .PHONY all: all-atlas
