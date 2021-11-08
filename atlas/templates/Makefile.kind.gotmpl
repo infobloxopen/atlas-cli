@@ -46,10 +46,10 @@ kind-dapr: helm-install kind-cluster helm-download
 kind-redis: helm-install kind-dapr create-namespace
 	@if [ "$(shell $(KUBECTL) get service -n redis | grep -c redis)" = "0" ]; then \
 	$(HELM) repo add bitnami https://charts.bitnami.com/bitnami; \
-	$(HELM) upgrade --install --namespace redis --create-namespace --wait redis bitnami/redis; else \
+	$(HELM) upgrade --install --namespace redis --set auth.enabled=false --create-namespace --wait redis bitnami/redis; else \
 	echo "redis is already installed"; fi
 	@if [ "$(shell $(KUBECTL) get component -n $(TARGET_NAMESPACE) | grep -c dapr-component)" = "0" ]; then \
-	sed -e "s/{TARGET_NAMESPACE}/$(TARGET_NAMESPACE)/; s/{REDIS_PASSWORD}/`$(KUBECTL) get secret --namespace redis redis -o jsonpath="{.data.redis-password}" | base64 --decode`/" kind/redis-no-password.yaml.template > kind/redis.yaml; \
+	sed -e "s/{TARGET_NAMESPACE}/$(TARGET_NAMESPACE)/g" kind/redis-no-password.yaml.template > kind/redis.yaml; \
 	$(KUBECTL) apply -f kind/redis.yaml; \
 	rm kind/redis.yaml; else \
 	echo "dapr-component is already installed"; fi
