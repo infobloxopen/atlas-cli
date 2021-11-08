@@ -39,14 +39,14 @@ spec:
           image: "{{ "{{" }} .Values.postgres.image {{ "}}" }}:{{ "{{" }} .Values.postgres.version {{ "}}" }}"
           env:
             - name: POSTGRES_USER
-            value: {{ "{{" }} .Values.db.username {{ "}}" }}
+              value: {{ "{{" }} .Values.db.username {{ "}}" }}
             - name: POSTGRES_PASSWORD
-            valueFrom:
-              secretKeyRef:
-              name: {{ "{{" }}  include "chart.fullname" . {{ "}}" }}-db-key
-              key: password
+              valueFrom:
+                secretKeyRef:
+                name: {{ "{{" }}  include "chart.fullname" . {{ "}}" }}-db-key
+                key: password
             - name: POSTGRES_DB
-            value: {{ "{{" }} .Values.db.database {{ "}}" }}
+              value: {{ "{{" }} .Values.db.database {{ "}}" }}
           ports:
             - containerPort: {{ "{{" }} .Values.postgres.port {{ "}}" }}
           livenessProbe:
