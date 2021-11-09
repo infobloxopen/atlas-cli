@@ -20,12 +20,12 @@ spec:
         prometheus.io/port: {{ "{{" }} .Values.internal.port | quote {{ "}}" }}
 {{- end }}
 {{- if or .WithSubscribeTopic .WithPublishTopic }}
-        dapr.io/port: {{`"{{ .Values.dapr.listenPort }}"`}}
+        dapr.io/app-port: {{`"{{ .Values.dapr.listenPort }}"`}}
         dapr.io/app-id: {{`{{ include "chart.fullname" . }}`}}
         dapr.io/log-level: {{`{{ .Values.dapr.logLevel }}`}}
         dapr.io/metrics-port: {{`{{ .Values.dapr.metricsPort | quote }}`}}
         dapr.io/enabled: {{`"{{ .Values.dapr.enabled }}"`}}
-        dapr.io/protocol: "grpc"
+        dapr.io/app-protocol: "grpc"
 {{- end }}
       labels:
         app: {{ "{{" }} include "chart.fullname" . {{ "}}" }}
@@ -77,7 +77,6 @@ spec:
             - "--database.dsn=$(dsn)"
 {{- end }}
 {{- if or .WithSubscribeTopic .WithPublishTopic }}
-            - "--dapr.component.name={{`{{ .Values.dapr.componentName }}`}}"
             - "--dapr.pubsub.name={{`{{ .Values.dapr.pubsubName }}`}}"
 {{- end }}
 {{- if .WithPublishTopic }}
@@ -85,6 +84,7 @@ spec:
             - "--dapr.publish.topic={{`{{ .Values.dapr.topics.publish }}`}}"
 {{- end }}
 {{- if .WithSubscribeTopic }}
+            - "--dapr.appPort={{`{{ .Values.dapr.listenPort }}`}}"
             - "--dapr.subscribe.topic={{`{{ .Values.dapr.topics.subscribe }}`}}"
 {{- end }}
 {{`{{- if .Values.internal.enable }}`}}

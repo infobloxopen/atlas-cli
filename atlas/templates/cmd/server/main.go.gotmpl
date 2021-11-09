@@ -32,7 +32,7 @@ func main() {
 	logger := NewLogger()
 
     {{- if or .WithSubscribeTopic .WithPublishTopic }}
-    pubsub, err := dapr.InitPubsub({{ if .WithSubscribeTopic }}viper.GetString("dapr.subscribe"){{ else }}""{{ end }}, viper.GetString("dapr.pubsub.name"), {{ if .WithPublishTopic }}viper.GetInt("dapr.grpcport"){{ else }}0{{ end }}, logger)
+	pubsub, err := dapr.InitPubsub({{ if .WithSubscribeTopic }}viper.GetString("dapr.subscribe.topic"){{ else }}""{{ end }}, viper.GetString("dapr.pubsub.name"), {{ if .WithSubscribeTopic }}viper.GetInt("dapr.appPort"){{ else }}0{{ end }}, {{ if .WithPublishTopic }}viper.GetInt("dapr.grpcport"){{ else }}0{{ end }}, logger)
 	if err != nil {
 		logger.Fatalf("Cannot initialize pubsub: %v", err)
 	}
@@ -123,7 +123,7 @@ func ServeExternal(logger *logrus.Logger{{ if or .WithPublishTopic .WithSubscrib
 	if viper.GetString("database.dsn") == "" {
 		setDBConnection()
 	}{{ end }}
-	grpcServer, err := NewGRPCServer(logger{{ if .WithDatabase }}, viper.GetString("database.dsn"){{ end }})
+	grpcServer, err := NewGRPCServer(logger{{ if or .WithPublishTopic .WithSubscribeTopic }}, pubsub{{ end }}{{ if .WithDatabase }}, viper.GetString("database.dsn"){{ end }})
 	if err != nil {
 		logger.Fatalln(err)
 	}

@@ -16,7 +16,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"{{ end }}
 )
 
-func NewGRPCServer(logger *logrus.Logger{{ if .WithDatabase }}, dbConnectionString string{{ end }}) (*grpc.Server, error){
+func NewGRPCServer(logger *logrus.Logger{{ if or .WithPublishTopic .WithSubscribeTopic }}, pubsub *dapr.PubSub{{ end }}{{ if .WithDatabase }}, dbConnectionString string{{ end }}) (*grpc.Server, error){
 	grpcServer := grpc.NewServer(
 	grpc.KeepaliveParams(
 		keepalive.ServerParameters{
@@ -52,7 +52,7 @@ func NewGRPCServer(logger *logrus.Logger{{ if .WithDatabase }}, dbConnectionStri
 		return nil, err
 	}{{ end }}
 	// register service implementation with the grpcServer
-	s, err := svc.NewBasicServer({{ if .WithDatabase }}db{{ end }})
+	s, err := svc.NewBasicServer({{ if or .WithPublishTopic .WithSubscribeTopic }}pubsub{{ if .WithDatabase }}, {{ end }}{{ end }}{{ if .WithDatabase }}db{{ end }})
 	if err != nil {
 		return nil, err
 	}

@@ -45,7 +45,7 @@ const (
 )
 
 // Default implementation of the {{ .Name | Service }} server interface
-type server struct{ {{ if .WithDatabase }}db *gorm.DB{{ end }} }
+type server struct{ {{ if or .WithPublishTopic .WithSubscribeTopic }}pubsub *dapr.PubSub{{ if .WithDatabase }}; {{ end }}{{ end }}{{ if .WithDatabase }}db *gorm.DB{{ end }} }
 
 // GetVersion returns the current version of the service
 func (server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse, error) {
@@ -72,6 +72,6 @@ func (server) Publish(ctx context.Context, pr *pb.PublishRequest) (*pb.PublishRe
 }
 {{ end }}
 // NewBasicServer returns an instance of the default server interface
-func NewBasicServer({{ if .WithDatabase}}database *gorm.DB{{ end }}) (pb.{{ .Name | Service }}Server, error) {
-	return &server{ {{ if .WithDatabase}}db: database{{ end }} }, nil
+func NewBasicServer({{ if or .WithPublishTopic .WithSubscribeTopic }}pubsub *dapr.PubSub{{ if .WithDatabase }}, {{ end }}{{ end }}{{ if .WithDatabase }}database *gorm.DB{{ end }}) (pb.{{ .Name | Service }}Server, error) {
+	return &server{ {{ if or .WithPublishTopic .WithSubscribeTopic }}pubsub: pubsub{{ if .WithDatabase }}, {{ end }}{{ end }}{{ if .WithDatabase}}db: database{{ end }} }, nil
 }
