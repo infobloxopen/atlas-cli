@@ -31,11 +31,18 @@ func main() {
 	doneC := make(chan error)
 	logger := NewLogger()
 
+    {{- if or .WithSubscribeTopic .WithPublishTopic }}
+	pubsub, err := dapr.InitPubsub({{ if .WithSubscribeTopic }}viper.GetString("dapr.subscribe.topic"){{ else }}""{{ end }}, viper.GetString("dapr.pubsub.name"), {{ if .WithSubscribeTopic }}viper.GetInt("dapr.appPort"){{ else }}0{{ end }}, {{ if .WithPublishTopic }}viper.GetInt("dapr.grpcport"){{ else }}0{{ end }}, logger)
+	if err != nil {
+		logger.Fatalf("Cannot initialize pubsub: %v", err)
+	}
+
+    {{- end }}
 	{{ if or .WithHealth .WithMetrics }}if viper.GetBool("internal.enable") {
 		go func() { doneC <- ServeInternal(logger) }()
 	}{{ end }}
 
-	go func() { doneC <- ServeExternal(logger) }()
+	go func() { doneC <- ServeExternal(logger{{ if or .WithPublishTopic .WithSubscribeTopic }}, pubsub{{ end }}) }()
 
 	{{ if .WithProfiler }}if viper.GetBool("profiler.enable") {
 		go func() {
@@ -111,12 +118,12 @@ func ServeInternal(logger *logrus.Logger) error {
 }
 {{ end }}
 // ServeExternal builds and runs the server that listens on ServerAddress and GatewayAddress
-func ServeExternal(logger *logrus.Logger) error {
+func ServeExternal(logger *logrus.Logger{{ if or .WithPublishTopic .WithSubscribeTopic }}, pubsub *dapr.PubSub{{ end }}) error {
 	{{ if .WithDatabase }}
 	if viper.GetString("database.dsn") == "" {
 		setDBConnection()
 	}{{ end }}
-	grpcServer, err := NewGRPCServer(logger{{ if .WithDatabase }}, viper.GetString("database.dsn"){{ end }})
+	grpcServer, err := NewGRPCServer(logger{{ if or .WithPublishTopic .WithSubscribeTopic }}, pubsub{{ end }}{{ if .WithDatabase }}, viper.GetString("database.dsn"){{ end }})
 	if err != nil {
 		logger.Fatalln(err)
 	}
