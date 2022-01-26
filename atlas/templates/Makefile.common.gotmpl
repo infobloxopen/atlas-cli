@@ -21,6 +21,7 @@ SRCROOT_IN_CONTAINER    ?= /go/src/$(PROJECT_ROOT)
 DOCKER_RUNNER           ?= docker run --rm -u `id -u`:`id -g` -e GOCACHE=/go -e CGO_ENABLED=0 -v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
 DOCKER_GENERATOR        ?= infoblox/atlas-gentool:latest
 GENERATOR               ?= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
+SWAGGER_GENERATOR       ?= $(DOCKER_RUNNER) --entrypoint atlas_patch $(DOCKER_GENERATOR)
 
 # configuration for building Go with Docker
 GO_IMAGE                ?= golang:1.16-alpine
@@ -58,7 +59,7 @@ ifeq ($(WITH_GATEWAY), true)
 PROTOBUF_ARGS += --grpc-gateway_out=.
 PROTOBUF_ARGS += --grpc-gateway_opt logtostderr=true,allow_delete_body=true
 PROTOBUF_ARGS += --openapiv2_out=.
-PROTOBUF_ARGS += --openapiv2_opt allow_delete_body=true,atlas_patch=true,json_names_for_fields=false
+PROTOBUF_ARGS += --openapiv2_opt allow_delete_body=true,json_names_for_fields=false
 else ifeq ($(WITH_EXPAND), true)
 PROTOBUF_ARGS += --grpc-gateway_out=.
 PROTOBUF_ARGS += --grpc-gateway_opt logtostderr=true
@@ -105,6 +106,15 @@ protobuf-atlas:
 	@$(GENERATOR) \
 	$(PROTOBUF_ARGS) \
 	$(PROJECT_ROOT)/pkg/pb/service.proto
+	make protobuf-swagger-patch
+
+.PHONY protobuf-swagger-patch:
+protobuf-swagger-patch:
+	@$(SWAGGER_GENERATOR) \
+	--files $(PROJECT_ROOT)/pkg/pb/service.swagger.json \
+	--with_custom_annotations \
+	# Uncomment to enable private
+	#--with_private
 
 .PHONY vendor: vendor-atlas
 vendor-atlas:
