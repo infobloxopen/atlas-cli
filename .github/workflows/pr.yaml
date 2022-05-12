@@ -15,7 +15,7 @@ jobs:
     env:
       HELM_VERSION: v3.4.2
     steps:
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v3.1.0
         with:
           go-version: "^1.14.0"
       - uses: azure/setup-helm@v1.1
