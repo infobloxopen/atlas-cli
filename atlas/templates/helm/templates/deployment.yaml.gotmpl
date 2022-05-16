@@ -65,10 +65,10 @@ spec:
 {{ end }}
           ports:
             - name: grpc
-              containerPort: {{ "{{" }} .Values.app.grpcPort {{ "}}" }}
+              containerPort: {{ "{{" }} .Values.service.grpcPort {{ "}}" }}
               protocol: {{ "{{" }} .Values.grpcProtocol {{ "}}" }}
             - name: http
-              containerPort: {{ "{{" }} .Values.app.httpPort {{ "}}" }}
+              containerPort: {{ "{{" }} .Values.service.httpPort {{ "}}" }}
               protocol: {{ "{{" }} .Values.httpProtocol {{ "}}" }}
             - name: internal
               containerPort: {{ "{{" }} .Values.internal.port {{ "}}" }}
