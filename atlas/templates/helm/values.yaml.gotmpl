@@ -64,8 +64,13 @@ tolerations: []
 affinity: {}
 
 {{- if .WithDatabase }}
+
 postgres:
   enabled: true
+  image: postgres
+  version: 12.2-alpine
+  port: 5432
+
 migration:
   name: migration
   image: infoblox/migrate
@@ -77,6 +82,7 @@ db:
   database: {{ .Helm.GetName }}
   sslMode: disable
   port: "5432"
+  serviceName: {{ .Helm.GetName }}-postgres
 
 secrets:
   enabled: true
