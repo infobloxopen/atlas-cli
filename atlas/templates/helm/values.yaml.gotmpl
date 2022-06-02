@@ -82,7 +82,7 @@ db:
   database: {{ .Helm.GetName }}
   sslMode: disable
   port: "5432"
-  serviceName: {{ .Helm.GetName }}-postgres
+  server: {{ .Helm.GetName }}-postgres
 
 secrets:
   enabled: true
