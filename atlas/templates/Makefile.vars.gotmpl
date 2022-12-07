@@ -2,10 +2,11 @@ PROJECT_ROOT            := {{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Na
 BUILD_PATH              := bin
 DOCKERFILE_PATH         := $(CURDIR)/docker
 
-AWS_ACCESS_KEY_ID?=`aws configure get aws_access_key_id`
-AWS_SECRET_ACCESS_KEY?=`aws configure get aws_secret_access_key`
-AWS_REGION?=`aws configure get region`
-DOCKER_ENV := -e AWS_REGION=$(AWS_REGION) -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)
+export AWS_ACCESS_KEY_ID    ?=$(shell aws configure get aws_access_key_id)
+export AWS_SECRET_ACCESS_KEY?=$(shell aws configure get aws_secret_access_key)
+export AWS_REGION           ?=$(shell aws configure get region)
+export AWS_SESSION_TOKEN	?= $(shell aws configure get aws_session_token)
+DOCKER_ENV := -e AWS_REGION -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOKEN
 
 # configuration for image names
 USERNAME                := $(USER)
@@ -58,7 +59,7 @@ WITH_GATEWAY = true
 BUILD_NUMBER  ?=0
 HELM          := bin/helm
 HELM3_VER     ?= `$(HELM) version -c --template {{`{{.Version}}`}} | grep v3`
-CHART_NAME    := {{ .Helm.GetName }}
+CHART_NAME    ?= {{ .Helm.GetName }}
 CHART_VERSION ?= $(shell git describe --long --tags --dirty=-unreleased --always || echo pre-commit)-j$(BUILD_NUMBER)
 CHART_FILE    := $(CHART_NAME)-$(CHART_VERSION).tgz
 {{end}}
