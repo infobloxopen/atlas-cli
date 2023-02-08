@@ -11,6 +11,12 @@ pipeline {
         sh "make fmt && git diff --exit-code"
       }
     }
+    {{ if .WithHelm }}
+    stage("Helm lint") {
+      steps {
+        sh "make helm-lint"
+      }
+    }{{end}}
     stage("Test") {
       steps {
         sh "make test"
