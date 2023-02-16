@@ -1,8 +1,9 @@
+{{- if .WithDatabase -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
-    namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
-    name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-migration
+  namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
+  name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-migration
 spec:
   template:
     spec:
@@ -57,3 +58,4 @@ spec:
       volumes:
       - name: migrations
         emptyDir: {}
+{{- end }}
