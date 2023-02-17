@@ -1,57 +1,61 @@
-apiVersion: v1
-kind: Pod
+{{- if .WithDatabase -}}
+apiVersion: batch/v1
+kind: Job
 metadata:
-    namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
-    name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-migration
+  namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
+  name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-{{ "{{" }} .Values.image.tag {{ "}}" }}-migration
 spec:
-  restartPolicy: OnFailure
-  initContainers:
-  - name: migration-source
-    image: {{ "{{" }} .Values.image.registry {{ "}}" }}{{ "{{" }} .Values.image.name {{ "}}" }}:{{ "{{" }} .Values.image.tag {{ "}}" }}
-    imagePullPolicy: {{ "{{" }} .Values.image.pullPolicy {{ "}}" }}
-    volumeMounts:
-    - mountPath: "/service-migrations"
-      name: migrations
-    command:
-    - "cp"
-    - "-r"
-    - "/db/migrations"
-    - "/service-migrations"
-  containers:
-    - name: migration
-      image: {{ "{{" }} .Values.migration.image {{ "}}" }}:{{ "{{" }} .Values.migration.version {{ "}}" }}
-      imagePullPolicy: {{ "{{" }} .Values.migration.imagePullPolicy {{ "}}" }}
-      volumeMounts:
-      - mountPath: "/service-migrations"
-        name: migrations
-      env:
-      - name: POSTGRES_USER
-        value: {{ "{{" }} tpl .Values.db.username . {{ "}}" }}
-      - name: POSTGRES_PASSWORD
-        valueFrom:
-          secretKeyRef:
-            name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-db-key
-            key: password
-      - name: POSTGRES_DB
-        value: {{ "{{" }} tpl .Values.db.database . {{ "}}" }}
-      - name: POSTGRES_HOST
-        value: {{ "{{" }} tpl (.Values.db.server | required "must set db.server") . {{ "}}" }}
-      - name: POSTGRES_PORT
-        value: {{ "{{" }} .Values.db.port | quote {{ "}}" }}
-      - name: POSTGRES_SSLMODE
-        value: {{ "{{" }} tpl .Values.db.sslMode . {{ "}}" }}
-      - name: LOGGING_LEVEL
-        value: debug
-      - name: dsn
-        value: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSLMODE)
-      command:
-      - /migrate
-      args:
-      - "--source"
-      - "file://service-migrations/migrations"
-      - "--database.dsn"
-      - "$(dsn)"
-      - "up"
-  volumes:
-  - name: migrations
-    emptyDir: {}
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers:
+      - name: migration-source
+        image: {{ "{{" }} .Values.image.registry {{ "}}" }}{{ "{{" }} .Values.image.name {{ "}}" }}:{{ "{{" }} .Values.image.tag {{ "}}" }}
+        imagePullPolicy: {{ "{{" }} .Values.image.pullPolicy {{ "}}" }}
+        volumeMounts:
+        - mountPath: "/service-migrations"
+          name: migrations
+        command:
+        - "cp"
+        - "-r"
+        - "/db/migrations"
+        - "/service-migrations"
+      containers:
+        - name: migration
+          image: {{ "{{" }} .Values.migration.image {{ "}}" }}:{{ "{{" }} .Values.migration.version {{ "}}" }}
+          imagePullPolicy: {{ "{{" }} .Values.migration.imagePullPolicy {{ "}}" }}
+          volumeMounts:
+          - mountPath: "/service-migrations"
+            name: migrations
+          env:
+          - name: POSTGRES_USER
+            value: {{ "{{" }} tpl .Values.db.username . {{ "}}" }}
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-db-key
+                key: password
+          - name: POSTGRES_DB
+            value: {{ "{{" }} tpl .Values.db.database . {{ "}}" }}
+          - name: POSTGRES_HOST
+            value: {{ "{{" }} tpl (.Values.db.server | required "must set db.server") . {{ "}}" }}
+          - name: POSTGRES_PORT
+            value: {{ "{{" }} .Values.db.port | quote {{ "}}" }}
+          - name: POSTGRES_SSLMODE
+            value: {{ "{{" }} tpl .Values.db.sslMode . {{ "}}" }}
+          - name: LOGGING_LEVEL
+            value: debug
+          - name: dsn
+            value: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSLMODE)
+          command:
+          - /migrate
+          args:
+          - "--source"
+          - "file://service-migrations/migrations"
+          - "--database.dsn"
+          - "$(dsn)"
+          - "up"
+      volumes:
+      - name: migrations
+        emptyDir: {}
+{{- end }}
