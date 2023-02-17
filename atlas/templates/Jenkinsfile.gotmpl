@@ -2,12 +2,21 @@ pipeline {
   agent {
     label 'ubuntu_docker_label'
   }
+  tools {
+    go "Go 1.19"
+  }
   stages {
     stage("Lint") {
       steps {
         sh "make fmt && git diff --exit-code"
       }
     }
+    {{ if .WithHelm }}
+    stage("Helm lint") {
+      steps {
+        sh "make helm-lint"
+      }
+    }{{end}}
     stage("Test") {
       steps {
         sh "make test"
@@ -22,7 +31,7 @@ pipeline {
     }
     stage("Push") {
       when {
-        branch "master"
+        branch "main"
       }
       steps {
         withDockerRegistry([credentialsId: "<insert-the-creds-id>", url: ""]) {
@@ -44,6 +53,9 @@ pipeline {
     }{{end}}
   }
   post {
+    success {
+      finalizeBuild()
+    }
     cleanup {
       sh "make clean || true"
       cleanWs()
