@@ -3,7 +3,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   namespace: {{ "{{" }} .Release.Namespace {{ "}}" }}
-  name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-migration
+  name: {{ "{{" }} include "chart.fullname" . {{ "}}" }}-{{ "{{" }} .Values.image.tag {{ "}}" }}-migration
 spec:
   template:
     spec:
