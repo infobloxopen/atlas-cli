@@ -16,7 +16,7 @@ jobs:
       HELM_VERSION: v3.4.2
     steps:
       - uses: actions/setup-go@v3
-      - uses: azure/setup-helm@v1.1
+      - uses: azure/setup-helm@v3.5
         with:
           version: ${{ env.HELM_VERSION }}
       - name: Checkout code
