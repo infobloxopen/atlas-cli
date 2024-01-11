@@ -15,23 +15,17 @@ jobs:
     env:
       HELM_VERSION: v3.4.2
     steps:
-      - uses: actions/setup-go@v5
-      - uses: azure/setup-helm@v3.5
-        with:
-          version: ${{ env.HELM_VERSION }}
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           path: ./src/github.com/${{ github.repository }}
-      - run: go version
-      - uses: actions/cache@v2
+      - uses: actions/setup-go@v5
         with:
-          path: |
-            ~/go/pkg/mod
-            ${{ github.workspace }}/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          cache-dependency-path: "./src/github.com/${{ github.repository }}/go.sum"
+      - uses: azure/setup-helm@v3.5
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - run: go version
       - run: echo ${{ github.workspace }}/bin >> $GITHUB_PATH
       - name: Test
         working-directory: ./src/github.com/${{ github.repository }}
