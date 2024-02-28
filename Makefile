@@ -5,7 +5,7 @@ run: templating
 	go run ./atlas/
 
 .bindata:
-	go install github.com/go-bindata/go-bindata/go-bindata@v3
+	go install github.com/go-bindata/go-bindata/v3/go-bindata@v3
 	touch $@
 
 templating: .bindata
