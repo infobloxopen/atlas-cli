@@ -29,6 +29,9 @@ const (
 	defaultDatabaseSSL      = "disable"
 	defaultDatabaseOption   = ""
 
+	defaultDatabaseOpenConn    = 10
+	defaultDatabaseMaxIdleConn = 10
+
 	// PubSub
 	defaultPubsubEnable    =  {{ if .WithPubsub }}true{{ else }}false{{ end }}
 	defaultPubsubAddress   = "pubsub.atlas"
@@ -113,6 +116,9 @@ var (
 	flagDatabasePassword = pflag.String("database.password", defaultDatabasePassword, "database password")
 	flagDatabaseSSL      = pflag.String("database.ssl", defaultDatabaseSSL, "database ssl mode")
 	flagDatabaseOption   = pflag.String("database.option", defaultDatabaseOption, "define custom option to db driver")
+	flagDatabaseMaxOpenConns   = pflag.Int("database.max.open.conns", defaultDatabaseOpenConn, "Database max open connections")
+	flagDatabaseMaxIdleConns   = pflag.Int("database.max.idle.conns", defaultDatabaseMaxIdleConn, "Database max idle connections")
+
 
 	flagPubsubEnable       = pflag.Bool("atlas.pubsub.enable", defaultPubsubEnable, "enable application with pubsub")
 	flagPubsubAddress      = pflag.String("atlas.pubsub.address", defaultPubsubAddress, "address or FQDN of the pubsub service")

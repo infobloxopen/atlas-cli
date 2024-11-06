@@ -50,7 +50,9 @@ func NewGRPCServer(logger *logrus.Logger{{ if or .WithPublishTopic .WithSubscrib
 	db, err := gorm.Open("postgres", dbConnectionString)
 	if err != nil {
 		return nil, err
-	}{{ end }}
+	}
+	setMaxOpenIdleConnection(db)
+	{{ end }}
 	// register service implementation with the grpcServer
 	s, err := svc.NewBasicServer({{ if or .WithPublishTopic .WithSubscribeTopic }}pubsub{{ if .WithDatabase }}, {{ end }}{{ end }}{{ if .WithDatabase }}db{{ end }})
 	if err != nil {
@@ -62,3 +64,10 @@ func NewGRPCServer(logger *logrus.Logger{{ if or .WithPublishTopic .WithSubscrib
 
 	return grpcServer, nil
 }
+
+{{ if .WithDatabase }}
+// setMaxOpenIdleConnection sets the db connection string
+func setMaxOpenIdleConnection(db *gorm.DB) {
+	db.DB().SetMaxOpenConns(viper.GetInt("database.max.open.conns"))
+	db.DB().SetMaxIdleConns(viper.GetInt("database.max.idle.conns"))
+}{{ end }}
