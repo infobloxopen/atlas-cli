@@ -31,6 +31,9 @@ const (
 
 	defaultDatabaseOpenConn    = 10
 	defaultDatabaseMaxIdleConn = 10
+	defaultDatabaseMaxConnLifetime = 30 * time.Minute
+	defaultDatabaseMaxConnIdleTime = 10 * time.Minute
+
 
 	// PubSub
 	defaultPubsubEnable    =  {{ if .WithPubsub }}true{{ else }}false{{ end }}
@@ -118,7 +121,9 @@ var (
 	flagDatabaseOption   = pflag.String("database.option", defaultDatabaseOption, "define custom option to db driver")
 	flagDatabaseMaxOpenConns   = pflag.Int("database.max.open.conns", defaultDatabaseOpenConn, "Database max open connections")
 	flagDatabaseMaxIdleConns   = pflag.Int("database.max.idle.conns", defaultDatabaseMaxIdleConn, "Database max idle connections")
-
+	flagDatabaseConnLifeTime   = pflag.Duration("database.max.conn.lifetime", defaultDatabaseMaxConnLifetime, "Database max connection lifetime")
+	flagDatabasMaxIdleTime     = pflag.Duration("database.max.conn.idle.time", defaultDatabaseMaxConnIdleTime, "Database max connection idle time")
+	flagDatabaseDebugMode      = pflag.Bool("database.log.mode", false, "enable database query log mode")
 
 	flagPubsubEnable       = pflag.Bool("atlas.pubsub.enable", defaultPubsubEnable, "enable application with pubsub")
 	flagPubsubAddress      = pflag.String("atlas.pubsub.address", defaultPubsubAddress, "address or FQDN of the pubsub service")
