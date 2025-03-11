@@ -35,4 +35,4 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-          make test-with-integration ${{ github.event.inputs.make-flags }}
+          make test-with-integration TARGET_NAMESPACE=atlas-cli-test ${{ github.event.inputs.make-flags }}

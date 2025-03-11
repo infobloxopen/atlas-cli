@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("failed to install atlas cli: %v", err)
 	}
 	log.Print("running init-app")
-	if out, err := exec.Command("atlas", "init-app", "-name=test", "-gateway", "-health", "-helm", "-pubsub", "-debug").CombinedOutput(); err != nil {
+	if out, err := exec.Command("atlas", "init-app", "-name=test", "-gateway", "-health", "-helm", "-kind", "-pubsub", "-debug").CombinedOutput(); err != nil {
 		log.Print(string(out))
 		log.Fatalf("failed to run atlas init-app: %v", err)
 	}
@@ -77,10 +77,12 @@ func TestMain(m *testing.M) {
 	if err := cmd.Start(); err != nil {
 		log.Fatalf("failed to start server: %v", err)
 	}
+	shutdown := make(chan struct{}, 1)
 	go func() {
-		if err := cmd.Wait(); err != nil {
-			log.Fatal()
+		if err := cmd.Wait(); err != nil && err.Error() != "signal: killed" {
+			log.Fatalf("server failed: %v", err)
 		}
+		shutdown <- struct{}{}
 	}()
 	log.Print("wait for servers to load up")
 	<-ready
@@ -88,8 +90,31 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 	// os.Exit() does not respect defer statements
+	cancel()
+	<-shutdown
 	e2eTeardown()
 	os.Exit(code)
+}
+
+func TestContainer(t *testing.T) {
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("deploying in kind")
+	basePath := fmt.Sprintf("%s/test", dir)
+	kind := exec.Command("make", "kind-deploy")
+	kind.Dir = basePath
+	if out, err := kind.CombinedOutput(); err != nil {
+		t.Fatalf("failed to deploy in kind: %v\n%s", err, string(out))
+	}
+
+	clean := exec.Command("make", "kind-destroy")
+	clean.Dir = basePath
+	if out, err := clean.CombinedOutput(); err != nil {
+		t.Fatalf("failed to clean up kind: %v\n%s", err, string(out))
+	}
 }
 
 func TestGetVersion(t *testing.T) {

@@ -91,8 +91,7 @@ func (app Application) initializeFiles() error {
 	}
 	if app.WithKind {
 		fileInitializers = append(fileInitializers, Application.generateMakefileKind,
-			Application.generateKindConfig, Application.generateKindConfigYaml,
-			Application.generateKindConfigV119, Application.generateRedisNoPassword)
+			Application.generateRedisNoPassword)
 	}
 	if app.WithDelve {
 		fileInitializers = append(fileInitializers, Application.generateMakefileDebugger)
@@ -191,18 +190,6 @@ func (app Application) generateFile(filename, templatePath string) error {
 		return err
 	}
 	return err
-}
-
-func (app Application) generateKindConfig() error {
-	return app.generateFile("kind/kind-config", "templates/kind/kind-config.gotmpl")
-}
-
-func (app Application) generateKindConfigYaml() error {
-	return app.generateFile("kind/kind-config.yaml.in", "templates/kind/kind-config.yaml.in.gotmpl")
-}
-
-func (app Application) generateKindConfigV119() error {
-	return app.generateFile("kind/kind-config-v1.19.0.yaml", "templates/kind/kind-config-v1.19.0.yaml.gotmpl")
 }
 
 func (app Application) generateRedisNoPassword() error {
