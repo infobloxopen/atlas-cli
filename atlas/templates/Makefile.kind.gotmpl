@@ -1,15 +1,13 @@
 # KinD-related variables
 KIND_NAME        := minikube
-KUBECTL_VERSION  ?= v1.15.10
-KIND_VERSION     ?= v0.8.1
-NODE_VERSION     ?= 1.19.0
+KUBECTL_VERSION  ?= v1.29.14
+KIND_VERSION     ?= v0.22.0
 DAPR_VERSION     := 1.1.1
-HELM_VERSION     := v3.5.3
-DOCKER_IMAGE     := $(IMAGE_REGISTRY)/$(IMAGE_NAME):$(IMAGE_VERSION)
-NODE_IMAGE       ?= kindest/node:v${NODE_VERSION}
+HELM_VERSION     := v3.17.1
+DOCKER_IMAGE     := {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}$(IMAGE_NAME):$(IMAGE_VERSION)
 KUBECONFIG       ?= ${HOME}/.kube/config
-KUBECTL          := bin/kubectl
-KIND             := bin/kind
+KUBECTL          := $(shell which kubectl || echo bin/kubectl)
+KIND             := $(shell which kind || echo bin/kind)
 TARGET_NAMESPACE ?= `cat .id`
 KERNEL_NAME      := `uname`
 CONFIGJSONFILE   := ~/.docker/config.json
@@ -46,7 +44,7 @@ kind-dapr: helm-install kind-cluster helm-download
 kind-redis: helm-install kind-dapr create-namespace
 	@if [ "$(shell $(KUBECTL) get service -n redis | grep -c redis)" = "0" ]; then \
 	$(HELM) repo add bitnami https://charts.bitnami.com/bitnami; \
-	$(HELM) upgrade --install --namespace redis --set auth.enabled=false --create-namespace --wait redis bitnami/redis; else \
+	$(HELM) upgrade --install --namespace redis --set architecture=standalone --set auth.enabled=false --create-namespace --wait redis bitnami/redis; else \
 	echo "redis is already installed"; fi
 	@if [ "$(shell $(KUBECTL) get component -n $(TARGET_NAMESPACE) | grep -c dapr-component)" = "0" ]; then \
 	sed -e "s/{TARGET_NAMESPACE}/$(TARGET_NAMESPACE)/g" kind/redis-no-password.yaml.template > kind/redis.yaml; \
@@ -77,20 +75,6 @@ kind-deploy-%: kind image package
 	@$(KIND) load --name ${KIND_NAME} docker-image ${DOCKER_IMAGE}
 	@$(MAKE) ${target} HELM_SETFLAGS='-f helm/minikube-values.yaml ${HELM_SETFLAGS}'
 
-kind/kind-config: kind/kind-config-v${NODE_VERSION}.yaml
-	@cp -v $< $@
-
-kind/kind-config-v${NODE_VERSION}.yaml: kind/kind-config.yaml.in
-	@sed 's|$${NODE_IMAGE}|${NODE_IMAGE}|g' kind/kind-config.yaml.in > kind/kind-config-v${NODE_VERSION}.yaml
-
-kind-image: .kind-image-v${NODE_VERSION}
-
-
-# see https://kind.sigs.k8s.io/docs/user/quick-start/#building-images
-.kind-image-v${NODE_VERSION}:
-	@kind build node-image --image ${NODE_IMAGE}
-	@docker push ${NODE_IMAGE}
-
 push: .push-$(IMAGE_VERSION)
 
 .push-$(IMAGE_VERSION): .image-$(IMAGE_VERSION)
@@ -105,9 +89,9 @@ push: .push-$(IMAGE_VERSION)
 		-t $(DOCKER_IMAGE) -f $(SERVER_DOCKERFILE) .
 	@touch $@
 
-kind-cluster: helm-install kind-download kind/kind-config
+kind-cluster: helm-install kind-download
 	@if [ "$(shell ${KIND} get clusters | grep ${KIND_NAME})" = "" ] ; then \
-		$(KIND) create cluster -v 1 --name ${KIND_NAME} --config kind/kind-config-v${NODE_VERSION}.yaml; \
+		$(KIND) create cluster -v 1 --name ${KIND_NAME}; \
 	fi
 	@$(KUBECTL) config use-context kind-${KIND_NAME}
 	@if [ "${HELM3_VER}" = "" ]; then\
