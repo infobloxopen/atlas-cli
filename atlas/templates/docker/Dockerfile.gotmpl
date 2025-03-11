@@ -1,16 +1,18 @@
 # build the server binary
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23 AS builder
 LABEL stage=server-intermediate
 WORKDIR /go/src/{{ .Root }}/{{ .Name }}
 
 COPY . .
-RUN go build -mod=vendor -o bin/server ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -o bin/server ./cmd/server
 
 # copy the server binary from builder stage; run the server binary
-FROM alpine:latest AS runner
+FROM gcr.io/distroless/static-debian12 AS runner
 WORKDIR /bin
 
 COPY --from=builder /go/src/{{ .Root }}/{{ .Name }}/bin/server .
 {{ if .WithGateway }}COPY pkg/pb/*.swagger.json www/swagger.json{{ end }}
 {{ if .WithDatabase }}COPY --from=builder /go/src/{{ .Root }}/{{ .Name }}/db/migrations /db/migrations/{{end}}
+
+USER nonroot:nonroot
 ENTRYPOINT ["server"{{ if .WithGateway}}, "--gateway.swaggerFile", "www/swagger.json"{{ end }}]
