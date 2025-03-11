@@ -1,5 +1,5 @@
 # build the server binary
-FROM golang:1.21-alpine3.17 AS builder
+FROM golang:1.23 AS builder
 LABEL stage=server-intermediate
 
 # install tools
@@ -12,7 +12,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -gcflags="all=-N -l" -o bin/server ./cmd/server
 
 # copy the server binary from builder stage; run the server binary
-FROM alpine:latest AS runner
+FROM gcr.io/distroless/static-debian12:debug AS runner
 WORKDIR /bin
 
 COPY --from=builder /go/src/{{ .Root }}/{{ .Name }}/bin/server .
@@ -24,5 +24,7 @@ EXPOSE 8080
 EXPOSE 8081
 EXPOSE 9090
 EXPOSE 12345
+
+USER nonroot:nonroot
 
 ENTRYPOINT [ "dlv", "exec", "./server", "--listen=:12345", "--headless=true", "--api-version=2", "--accept-multiclient", "--continue", "--" ]
