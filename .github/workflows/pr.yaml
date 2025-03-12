@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           cache-dependency-path: "./src/github.com/${{ github.repository }}/go.sum"
-      - uses: azure/setup-helm@v3.5
+      - uses: azure/setup-helm@v4
         with:
           version: ${{ env.HELM_VERSION }}
       - run: go version
