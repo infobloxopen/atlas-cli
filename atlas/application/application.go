@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 	"text/template"
 
@@ -20,6 +21,7 @@ type Application struct {
 	WithGateway        bool
 	WithDatabase       bool
 	WithHealth         bool
+	WithGithub         bool
 	WithMetrics        bool
 	WithPubsub         bool
 	WithHelm           bool
@@ -70,21 +72,23 @@ func (app Application) Update() error {
 // initializeFiles generates each file for a new application
 func (app Application) initializeFiles() error {
 	fileInitializers := []func(Application) error{
-		Application.generateDockerfile,
-		Application.generateDeployFile,
-		Application.generateReadme,
+		app.generateFiles(
+			"templates/docker/Dockerfile.gotmpl",
+			"templates/deploy/config.yaml.gotmpl",
+			"templates/README.md.gotmpl",
+			"templates/.gitignore.gotmpl",
+			"templates/Makefile.gotmpl",
+			"templates/Makefile.vars.gotmpl",
+			"templates/Jenkinsfile.gotmpl",
+			"templates/pkg/pb/service.proto.gotmpl",
+			"templates/cmd/server/main.go.gotmpl",
+			"templates/cmd/server/grpc.go.gotmpl",
+			"templates/cmd/server/config.go.gotmpl",
+			"templates/pkg/svc/zserver.go.gotmpl",
+			"templates/pkg/svc/zserver_test.go.gotmpl",
+		),
 		Application.generateGoMod,
-		Application.generateGitignore,
-		Application.generateMakefileVars,
 		Application.generateMakefileCommon,
-		Application.generateMakefile,
-		Application.generateJenkinsfile,
-		Application.generateProto,
-		Application.generateServerMain,
-		Application.generateServerGrpc,
-		Application.generateConfig,
-		Application.generateService,
-		Application.generateServiceTest,
 	}
 	if app.WithSubscribeTopic != "" || app.WithPublishTopic != "" {
 		fileInitializers = append(fileInitializers, Application.generatePubsub, Application.generatePubsubTest)
@@ -102,6 +106,9 @@ func (app Application) initializeFiles() error {
 	}
 	if app.WithDatabase {
 		fileInitializers = append(fileInitializers, Application.generateMigrationFile)
+	}
+	if app.WithGithub {
+		fileInitializers = append(fileInitializers, app.generateFiles(filterAssets("templates/.github")...))
 	}
 	if app.Helm != nil {
 		fileInitializers = append(fileInitializers, Application.generateHelmCharts)
@@ -156,6 +163,13 @@ func (app Application) GetDirectories() []string {
 			"db/fixtures",
 		)
 	}
+	if app.WithGithub {
+		dirnames = append(dirnames,
+			mapString(filterAssetDirs("templates/.github"), func(s string) string {
+				return strings.TrimPrefix(s, "templates/")
+			})...,
+		)
+	}
 	if app.WithHelm {
 		dirnames = append(dirnames,
 			app.Helm.GetDirs()...,
@@ -196,36 +210,29 @@ func (app Application) generateRedisNoPassword() error {
 	return app.generateFile("kind/redis-no-password.yaml.template", "templates/kind/redis-no-password.yaml.template.gotmpl")
 }
 
-func (app Application) generateDockerfile() error {
-	return app.generateFile("docker/Dockerfile", "templates/docker/Dockerfile.gotmpl")
+// generateFiles is a helper for calling app.generateFile().
+// It calls app.generateFile() for each given filename.
+func (app Application) generateFiles(tmplPaths ...string) func(Application) error {
+	return func(Application) error {
+		for _, tmplPath := range tmplPaths {
+			if err := app.generateFile(strings.TrimSuffix(strings.TrimPrefix(tmplPath, "templates/"), ".gotmpl"), tmplPath); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 }
 
 func (app Application) generateDockerfileDebug() error {
 	return app.generateFile("docker/Dockerfile.debug", "templates/docker/Dockerfile.debug.gotmpl")
 }
 
-func (app Application) generateDeployFile() error {
-	return app.generateFile("deploy/config.yaml", "templates/deploy/config.yaml.gotmpl")
-}
-
 func (app Application) generateMigrationFile() error {
 	return app.generateFile("deploy/migrations.yaml", "templates/deploy/migrations.yaml.gotmpl")
 }
 
-func (app Application) generateReadme() error {
-	return app.generateFile("README.md", "templates/README.md.gotmpl")
-}
-
-func (app Application) generateGitignore() error {
-	return app.generateFile(".gitignore", "templates/.gitignore.gotmpl")
-}
-
 func (app Application) generateGoMod() error {
 	return app.generateFile("go.mod", "templates/go.mod.gotmpl")
-}
-
-func (app Application) generateMakefile() error {
-	return app.generateFile("Makefile", "templates/Makefile.gotmpl")
 }
 
 func (app Application) generateMakefileKind() error {
@@ -236,40 +243,16 @@ func (app Application) generateMakefileDebugger() error {
 	return app.generateFile("Makefile.remotedebug", "templates/Makefile.remotedebug.gotmpl")
 }
 
-func (app Application) generateMakefileVars() error {
-	return app.generateFile("Makefile.vars", "templates/Makefile.vars.gotmpl")
-}
-
 func (app Application) generateMakefileCommon() error {
 	return app.generateFile("Makefile.common", "templates/Makefile.common.gotmpl")
-}
-
-func (app Application) generateJenkinsfile() error {
-	return app.generateFile("Jenkinsfile", "templates/Jenkinsfile.gotmpl")
-}
-
-func (app Application) generateProto() error {
-	return app.generateFile("pkg/pb/service.proto", "templates/pkg/pb/service.proto.gotmpl")
-}
-
-func (app Application) generateServerMain() error {
-	return app.generateFile("cmd/server/main.go", "templates/cmd/server/main.go.gotmpl")
 }
 
 func (app Application) generateServerProfiler() error {
 	return app.generateFile("cmd/server/profiler.go", "templates/cmd/server/profiler.go.gotmpl")
 }
 
-func (app Application) generateServerGrpc() error {
-	return app.generateFile("cmd/server/grpc.go", "templates/cmd/server/grpc.go.gotmpl")
-}
-
 func (app Application) generateServerSwagger() error {
 	return app.generateFile("cmd/server/swagger.go", "templates/cmd/server/swagger.go.gotmpl")
-}
-
-func (app Application) generateConfig() error {
-	return app.generateFile("cmd/server/config.go", "templates/cmd/server/config.go.gotmpl")
 }
 
 func (app Application) generatePubsub() error {
@@ -280,14 +263,6 @@ func (app Application) generatePubsubTest() error {
 	return app.generateFile("pkg/dapr/pubsub_test.go", "templates/pkg/dapr/pubsub_test.go.gotmpl")
 }
 
-func (app Application) generateService() error {
-	return app.generateFile("pkg/svc/zserver.go", "templates/pkg/svc/zserver.go.gotmpl")
-}
-
-func (app Application) generateServiceTest() error {
-	return app.generateFile("pkg/svc/zserver_test.go", "templates/pkg/svc/zserver_test.go.gotmpl")
-}
-
 func (app Application) generateHelmCharts() error {
 	for helmPath, tmplPath := range app.Helm.GetFiles(app.WithDatabase) {
 		if err := app.generateFile(helmPath, tmplPath); err != nil {
@@ -295,4 +270,43 @@ func (app Application) generateHelmCharts() error {
 		}
 	}
 	return nil
+}
+
+func filterString(vs []string, f func(string) bool) []string {
+	vsf := make([]string, 0)
+	for _, v := range vs {
+		if f(v) {
+			vsf = append(vsf, v)
+		}
+	}
+	return vsf
+}
+
+func mapString(vs []string, f func(string) string) []string {
+	vsm := make([]string, len(vs))
+	for i, v := range vs {
+		vsm[i] = f(v)
+	}
+	return vsm
+}
+
+// filterAssets returns a list of assets under the given prefix/path
+func filterAssets(prefix string) []string {
+	return filterString(templates.AssetNames(), func(s string) bool {
+		return strings.HasPrefix(s, prefix)
+	})
+}
+
+// filterAssets returns a list of directories that contain assets under the given prefix/path
+func filterAssetDirs(prefix string) []string {
+	assets := filterAssets(prefix)
+	dirs := make(map[string]struct{}, len(assets))
+	for _, asset := range assets {
+		dirs[path.Dir(asset)] = struct{}{}
+	}
+	dedupedDirs := make([]string, len(dirs))
+	for dir := range dirs {
+		dedupedDirs = append(dedupedDirs, dir)
+	}
+	return dedupedDirs
 }

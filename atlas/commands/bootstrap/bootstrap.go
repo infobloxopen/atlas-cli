@@ -27,6 +27,7 @@ const (
 	flagWithGateway        = "gateway"
 	flagWithDebug          = "debug"
 	flagWithDatabase       = "db"
+	flagWithGithub         = "github"
 	flagWithHealth         = "health"
 	flagWithMetrics        = "metrics"
 	flagWithPubsub         = "pubsub"
@@ -47,6 +48,7 @@ var (
 	initializeGateway        = initialize.Bool(flagWithGateway, false, "generate project with a gRPC gateway (default false)")
 	initializeDebug          = initialize.Bool(flagWithDebug, false, "print debug statements during intialization (default false)")
 	initializeDatabase       = initialize.Bool(flagWithDatabase, false, "initialize the application with database folders")
+	initializeGithub         = initialize.Bool(flagWithGithub, true, "generate project with Github-specific configs in /.github")
 	initializeHealth         = initialize.Bool(flagWithHealth, false, "initialize the application with internal health checks")
 	initializeMetrics        = initialize.Bool(flagWithMetrics, true, "initialize the application with gRPC Prometheus metrics")
 	initializePubsub         = initialize.Bool(flagWithPubsub, false, "initialize the application with a pubsub example")
@@ -87,6 +89,7 @@ func (b Bootstrap) Run() error {
 		Root:               root,
 		WithGateway:        *initializeGateway,
 		WithDatabase:       *initializeDatabase,
+		WithGithub:         *initializeGithub,
 		WithHealth:         *initializeHealth,
 		WithMetrics:        *initializeMetrics,
 		WithPubsub:         *initializePubsub,
