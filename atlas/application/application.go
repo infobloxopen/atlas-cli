@@ -204,14 +204,6 @@ func (app Application) generateDockerfileDebug() error {
 	return app.generateFile("docker/Dockerfile.debug", "templates/docker/Dockerfile.debug.gotmpl")
 }
 
-func (app Application) generateDeployFile() error {
-	return app.generateFile("deploy/config.yaml", "templates/deploy/config.yaml.gotmpl")
-}
-
-func (app Application) generateMigrationFile() error {
-	return app.generateFile("deploy/migrations.yaml", "templates/deploy/migrations.yaml.gotmpl")
-}
-
 func (app Application) generateReadme() error {
 	return app.generateFile("README.md", "templates/README.md.gotmpl")
 }
