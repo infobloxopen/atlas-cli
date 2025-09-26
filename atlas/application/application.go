@@ -71,7 +71,6 @@ func (app Application) Update() error {
 func (app Application) initializeFiles() error {
 	fileInitializers := []func(Application) error{
 		Application.generateDockerfile,
-		Application.generateDeployFile,
 		Application.generateReadme,
 		Application.generateGoMod,
 		Application.generateGitignore,
@@ -99,9 +98,6 @@ func (app Application) initializeFiles() error {
 	}
 	if app.WithGateway {
 		fileInitializers = append(fileInitializers, Application.generateServerSwagger)
-	}
-	if app.WithDatabase {
-		fileInitializers = append(fileInitializers, Application.generateMigrationFile)
 	}
 	if app.Helm != nil {
 		fileInitializers = append(fileInitializers, Application.generateHelmCharts)
